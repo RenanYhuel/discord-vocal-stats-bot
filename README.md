@@ -1,6 +1,6 @@
 # Discord Vocal Stats Bot
 
-Bot Discord de statistiques et de présence vocale écrit en TypeScript strict avec Drizzle ORM et SQLite. Il suit l'activité vocale des membres et intègre la détection et la soustraction automatique du temps passé en sourdine casque.
+Bot Discord de statistiques et de présence vocale écrit en TypeScript strict avec Drizzle ORM et SQLite. Il suit l'activité vocale des membres et fournit des indicateurs détaillés sur le temps passé en sourdine casque.
 
 ---
 
@@ -21,7 +21,7 @@ STATS_ID=id_salon_annonces_stats
 ## Commandes Disponibles
 
 * **/top** : Affiche le classement général des membres en vocal sur le serveur.
-* **/stats `[cible]`** : Affiche les statistiques détaillées (temps d'activité, pourcentage de sourdine casque, salon favori, tendance, graphiques d'activité sur 7 jours et badges virtuels).
+* **/stats `[cible]`** : Affiche les statistiques détaillées (temps total, répartition actif/sourdine casque, sessions, salon favori, tendance, graphiques d'activité sur 7 jours et badges virtuels).
 * **/compare `<membre1>` `<membre2>`** : Compare les statistiques vocales de deux membres (temps total, actif, sourdine, salons favoris et temps passé ensemble/en tête-à-tête).
 * **/insolite `<classement>`** : Affiche des classements insolites (insomniaques de nuit, connexions éclairs, temps passé seul, marathons).
 * **/badges** : Affiche la liste des trophées / rôles virtuels du serveur et leurs détenteurs.
