@@ -16,6 +16,8 @@ LOG_CHANNEL_ID=id_salon_logs_carlbot
 STATS_ID=id_salon_annonces_stats
 ```
 
+> **Note sur le salon de logs (LOG_CHANNEL_ID)** : Ce salon doit recevoir les logs de connexions/déconnexions vocales de **Carl-bot**. Le bot utilise ce salon comme historique de secours pour rattraper automatiquement les sessions manquées ou non enregistrées pendant ses périodes d'arrêt ou de redémarrage.
+
 ---
 
 ## Commandes Disponibles
