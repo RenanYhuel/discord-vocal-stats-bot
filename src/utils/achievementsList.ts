@@ -327,10 +327,10 @@ export const ACHIEVEMENTS: Achievement[] = [
     {
         id: "special_11",
         title: "Couche-tard",
-        description: "Faire une session active de plus de 8 heures débutée après 22h et terminée avant 04h",
+        description: "Faire une session active de plus de 5 heures débutée après 22h et terminée avant 04h",
         category: "special",
         difficulty: "Argent",
-        check: (s) => s.sessionActiveSec >= 8 * 3600 && (s.joinHour >= 22 || s.joinHour < 4),
+        check: (s) => s.sessionActiveSec >= 5 * 3600 && (s.joinHour >= 22 || s.joinHour < 4),
     },
     {
         id: "special_12",
