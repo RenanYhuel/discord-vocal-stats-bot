@@ -14,6 +14,7 @@ CLIENT_ID=id_du_bot
 GUILD_ID=id_du_serveur
 LOG_CHANNEL_ID=id_salon_logs_carlbot
 STATS_ID=id_salon_annonces_stats
+ADMIN_ID=ton_id_discord_admin
 ```
 
 > **Note sur le salon de logs (LOG_CHANNEL_ID)** : Ce salon doit recevoir les logs de connexions/déconnexions vocales de **Carl-bot**. Le bot utilise ce salon comme historique de secours pour rattraper automatiquement les sessions manquées ou non enregistrées pendant ses périodes d'arrêt ou de redémarrage.

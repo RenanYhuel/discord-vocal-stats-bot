@@ -12,13 +12,12 @@ export interface BotConfig {
 }
 
 const config: BotConfig = {
-    token: process.env.TOKEN || process.env.DISCORD_TOKEN || "",
-    clientId: process.env.CLIENT_ID || "1520385160514764960",
+    token: process.env.TOKEN || "",
+    clientId: process.env.CLIENT_ID || "",
     guildId: process.env.GUILD_ID || "",
-    carlLogChannelId:
-        process.env.LOG_CHANNEL_ID || process.env.CARL_LOG_CHANNEL_ID || "",
+    carlLogChannelId: process.env.LOG_CHANNEL_ID || "",
     statsChannelId: process.env.STATS_ID || "",
-    adminId: "767365180593537025",
+    adminId: process.env.ADMIN_ID || "",
     timezone: "Europe/Paris",
 };
 
