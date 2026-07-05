@@ -104,9 +104,10 @@ export function initSchema(): void {
 
   // Migration progressive : Ajout des colonnes manquantes si la DB existait déjà
   try {
-    const tableInfo = sqlite.prepare("PRAGMA table_info(voice_sessions)").all() as { name: string }[];
-    const hasActiveSec = tableInfo.some(col => col.name === "active_sec");
-    const hasDeafSec = tableInfo.some(col => col.name === "deaf_sec");
+    // 1. Pour la table voice_sessions
+    const sessionsInfo = sqlite.prepare("PRAGMA table_info(voice_sessions)").all() as { name: string }[];
+    const hasActiveSec = sessionsInfo.some(col => col.name === "active_sec");
+    const hasDeafSec = sessionsInfo.some(col => col.name === "deaf_sec");
 
     if (!hasActiveSec) {
       sqlite.exec("ALTER TABLE voice_sessions ADD COLUMN active_sec INTEGER DEFAULT 0;");
@@ -115,6 +116,20 @@ export function initSchema(): void {
     if (!hasDeafSec) {
       sqlite.exec("ALTER TABLE voice_sessions ADD COLUMN deaf_sec INTEGER DEFAULT 0;");
       logger.info("[MIGRATION] Colonne 'deaf_sec' ajoutée à la table 'voice_sessions'.");
+    }
+
+    // 2. Pour la table voice_current
+    const currentInfo = sqlite.prepare("PRAGMA table_info(voice_current)").all() as { name: string }[];
+    const hasIsDeaf = currentInfo.some(col => col.name === "is_deaf");
+    const hasDeafenedAt = currentInfo.some(col => col.name === "deafened_at");
+
+    if (!hasIsDeaf) {
+      sqlite.exec("ALTER TABLE voice_current ADD COLUMN is_deaf INTEGER DEFAULT 0;");
+      logger.info("[MIGRATION] Colonne 'is_deaf' ajoutée à la table 'voice_current'.");
+    }
+    if (!hasDeafenedAt) {
+      sqlite.exec("ALTER TABLE voice_current ADD COLUMN deafened_at TEXT;");
+      logger.info("[MIGRATION] Colonne 'deafened_at' ajoutée à la table 'voice_current'.");
     }
   } catch (err) {
     logger.error("Erreur lors de la migration des colonnes de la DB", err);
