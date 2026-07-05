@@ -16,8 +16,9 @@ export default {
         .addStringOption((option) =>
             option
                 .setName("categorie")
-                .setDescription("Filtrer par type de succes")
+                .setDescription("Filtrer par type de succes ou afficher le resume")
                 .addChoices(
+                    { name: "Résumé de progression (resume)", value: "resume" },
                     { name: "Temps total (time)", value: "time" },
                     { name: "Marathons (marathon)", value: "marathon" },
                     { name: "Horaires (schedule)", value: "schedule" },
@@ -26,17 +27,11 @@ export default {
                     { name: "Duo (duo)", value: "duo" },
                     { name: "Speciaux (special)", value: "special" }
                 )
-        )
-        .addBooleanOption((option) =>
-            option
-                .setName("resume")
-                .setDescription("Afficher uniquement un resume de la progression (optionnel)")
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         await interaction.deferReply();
         const target = interaction.options.getUser("cible") || interaction.user;
         const filterCategory = interaction.options.getString("categorie");
-        const showResume = interaction.options.getBoolean("resume") || false;
 
         const unlockedResult = db
             .select({
@@ -52,7 +47,7 @@ export default {
             unlockedMap.set(r.achievementId, r.unlockedAt);
         });
 
-        if (showResume) {
+        if (filterCategory === "resume") {
             const categories = {
                 time: { label: "Temps total", unlocked: 0, total: 0 },
                 marathon: { label: "Marathons", unlocked: 0, total: 0 },
