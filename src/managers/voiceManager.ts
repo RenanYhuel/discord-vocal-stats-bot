@@ -3,7 +3,7 @@ import logger from "../utils/logger";
 import { checkAndAnnounceRecord } from "./recordManager";
 import config from "../config";
 import { Client, EmbedBuilder, TextChannel } from "discord.js";
-import { voiceSessions, voiceDeafSessions } from "../database/schema";
+import { voiceSessions, voiceDeafSessions, state } from "../database/schema";
 import { sql, eq, and, lte, gte } from "drizzle-orm";
 
 interface DBLeaderboardRow {
@@ -58,6 +58,24 @@ export async function checkRankOvertake(
                 myProjectedTotal > targetUser.totalSec &&
                 myCurrentTotal <= targetUser.totalSec
             ) {
+                const overtakeKey = `overtake_${userId}_${targetUser.userId}`;
+                const alreadyOvertaken = db
+                    .select()
+                    .from(state)
+                    .where(eq(state.key, overtakeKey))
+                    .get();
+
+                if (alreadyOvertaken) {
+                    break;
+                }
+
+                db.insert(state)
+                    .values({
+                        key: overtakeKey,
+                        value: new Date().toISOString(),
+                    })
+                    .run();
+
                 const embed = new EmbedBuilder()
                     .setTitle("Dépassement de classement en direct")
                     .setColor("#3498DB")
@@ -138,6 +156,10 @@ export function recordCompletedSession(
                     lte(voiceDeafSessions.endTime, leaveTimeStr),
                 ),
             )
+            .run();
+
+        db.delete(state)
+            .where(sql`key LIKE ${"overtake_" + userId + "_%"}`)
             .run();
 
         checkAndAnnounceRecord(
