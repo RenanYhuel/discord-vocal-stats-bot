@@ -116,37 +116,37 @@ export default {
     const t2 = stats2.totalSec;
     
     const diffText = t1 > t2 
-      ? `📈 <@${u1.id}> a \`${formatDurationStandard(t1 - t2)}\` d'avance sur <@${u2.id}>.`
-      : `📈 <@${u2.id}> a \`${formatDurationStandard(t2 - t1)}\` d'avance sur <@${u1.id}>.`;
+      ? `<@${u1.id}> a \`${formatDurationStandard(t1 - t2)}\` d'avance sur <@${u2.id}>.`
+      : `<@${u2.id}> a \`${formatDurationStandard(t2 - t1)}\` d'avance sur <@${u1.id}>.`;
 
     const ratio1 = Math.round((stats1.deafSec / t1) * 100);
     const ratio2 = Math.round((stats2.deafSec / t2) * 100);
 
     const embed = new EmbedBuilder()
-      .setTitle("📊 Comparatif de Temps Vocal")
+      .setTitle("Comparatif de Temps Vocal")
       .setDescription(diffText)
       .setColor("#3498DB")
       .addFields([
         { 
           name: `👤 ${u1.username}`, 
-          value: `⏱ **Temps total :** \`${formatDurationStandard(t1)}\`\n` +
-                 `🟢 **Temps actif :** \`${formatDurationStandard(stats1.activeSec)}\` (${100 - ratio1}%)\n` +
-                 `🔴 **Sourdine :** \`${formatDurationStandard(stats1.deafSec)}\` (${ratio1}%)\n` +
-                 `📞 **Sessions :** \`${stats1.sessions}\` (~${Math.round(t1 / stats1.sessions / 60)}m/session)\n` +
-                 `🔥 **Record d'affilée :** \`${formatDurationStandard(stats1.maxSec)}\`\n` +
-                 `🎙 **Salon favori :** ${favChan1 ? `\`#${favChan1.channelName}\` (${formatDurationStandard(favChan1.totalSec)})` : "Aucun"}\n` +
-                 `🌙 **Nuit (00h-06h) :** \`${formatDurationStandard(n1)}\` (${Math.round((n1 / t1) * 100)}%)`, 
+          value: `**Temps total :** \`${formatDurationStandard(t1)}\`\n` +
+                 `**Temps actif :** \`${formatDurationStandard(stats1.activeSec)}\` (${100 - ratio1}%)\n` +
+                 `**Sourdine :** \`${formatDurationStandard(stats1.deafSec)}\` (${ratio1}%)\n` +
+                 `**Sessions :** \`${stats1.sessions}\` (~${Math.round(t1 / stats1.sessions / 60)}m/session)\n` +
+                 `**Record d'affilée :** \`${formatDurationStandard(stats1.maxSec)}\`\n` +
+                 `**Salon favori :** ${favChan1 ? `\`#${favChan1.channelName}\` (${formatDurationStandard(favChan1.totalSec)})` : "Aucun"}\n` +
+                 `**Nuit (00h-06h) :** \`${formatDurationStandard(n1)}\` (${Math.round((n1 / t1) * 100)}%)`, 
           inline: true 
         },
         { 
           name: `👤 ${u2.username}`, 
-          value: `⏱ **Temps total :** \`${formatDurationStandard(t2)}\`\n` +
-                 `🟢 **Temps actif :** \`${formatDurationStandard(stats2.activeSec)}\` (${100 - ratio2}%)\n` +
-                 `🔴 **Sourdine :** \`${formatDurationStandard(stats2.deafSec)}\` (${ratio2}%)\n` +
-                 `📞 **Sessions :** \`${stats2.sessions}\` (~${Math.round(t2 / stats2.sessions / 60)}m/session)\n` +
-                 `🔥 **Record d'affilée :** \`${formatDurationStandard(stats2.maxSec)}\`\n` +
-                 `🎙 **Salon favori :** ${favChan2 ? `\`#${favChan2.channelName}\` (${formatDurationStandard(favChan2.totalSec)})` : "Aucun"}\n` +
-                 `🌙 **Nuit (00h-06h) :** \`${formatDurationStandard(n2)}\` (${Math.round((n2 / t2) * 100)}%)`, 
+          value: `**Temps total :** \`${formatDurationStandard(t2)}\`\n` +
+                 `**Temps actif :** \`${formatDurationStandard(stats2.activeSec)}\` (${100 - ratio2}%)\n` +
+                 `**Sourdine :** \`${formatDurationStandard(stats2.deafSec)}\` (${ratio2}%)\n` +
+                 `**Sessions :** \`${stats2.sessions}\` (~${Math.round(t2 / stats2.sessions / 60)}m/session)\n` +
+                 `**Record d'affilée :** \`${formatDurationStandard(stats2.maxSec)}\`\n` +
+                 `**Salon favori :** ${favChan2 ? `\`#${favChan2.channelName}\` (${formatDurationStandard(favChan2.totalSec)})` : "Aucun"}\n` +
+                 `**Nuit (00h-06h) :** \`${formatDurationStandard(n2)}\` (${Math.round((n2 / t2) * 100)}%)`, 
           inline: true 
         }
       ])
