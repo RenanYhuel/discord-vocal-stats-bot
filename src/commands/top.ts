@@ -12,7 +12,7 @@ interface DBLeaderboardRow {
 
 export function generateLeaderboardEmbed(leaderboard: DBLeaderboardRow[], page: number, totalPages: number): EmbedBuilder {
   const embed = new EmbedBuilder()
-    .setTitle("🏆 Classement Vocal Général")
+    .setTitle("Classement Vocal Général")
     .setColor("#5865F2")
     .setFooter({ text: `Page ${page} / ${totalPages}` })
     .setTimestamp();
@@ -34,13 +34,13 @@ export function generateLeaderboardEmbed(leaderboard: DBLeaderboardRow[], page: 
 export function generateLeaderboardButtons(page: number, totalPages: number): ActionRowBuilder<ButtonBuilder> {
   const prevButton = new ButtonBuilder()
     .setCustomId(`page_${page - 1}`)
-    .setLabel("◀️ Précédent")
+    .setLabel("Précédent")
     .setStyle(ButtonStyle.Secondary)
     .setDisabled(page === 1);
 
   const nextButton = new ButtonBuilder()
     .setCustomId(`page_${page + 1}`)
-    .setLabel("Suivant ▶️")
+    .setLabel("Suivant")
     .setStyle(ButtonStyle.Secondary)
     .setDisabled(page === totalPages);
 

@@ -39,10 +39,10 @@ export default {
         .setDescription("Le type de classement insolite")
         .setRequired(true)
         .addChoices(
-          { name: "🦉 Les insomniaques (00h-06h)", value: "night" },
-          { name: "🚶‍♂️ Le Roi des Déco/Reco", value: "hopper" },
-          { name: "👤 Les Solitaires (Temps passé seul)", value: "alone" },
-          { name: "🛌 Les plus longues sessions d'affilée", value: "marathon" }
+          { name: "Les insomniaques (00h-06h)", value: "night" },
+          { name: "Le Roi des Déco/Reco", value: "hopper" },
+          { name: "Les Solitaires (Temps passé seul)", value: "alone" },
+          { name: "Les plus longues sessions d'affilée", value: "marathon" }
         )
     ),
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -67,7 +67,7 @@ export default {
       data.forEach((row, idx) => {
         text += `**#${idx+1}** <@${row.userId}> : \`${formatDurationStandard(row.totalSec)}\`\n`;
       });
-      embed.setTitle("🦉 Les insomniaques de nuit (00h-06h)").setDescription(text || "Aucune donnée");
+      embed.setTitle("Les insomniaques de nuit (00h-06h)").setDescription(text || "Aucune donnée");
     }
 
     else if (type === "hopper") {
@@ -86,7 +86,7 @@ export default {
       data.forEach((row, idx) => {
         text += `**#${idx+1}** <@${row.userId}> : \`${row.sessions}\` connexions vocales\n`;
       });
-      embed.setTitle("🚶‍♂️ Le Roi de la Connexion / Déconnexion").setDescription(text || "Aucune donnée");
+      embed.setTitle("Le Roi de la Connexion / Déconnexion").setDescription(text || "Aucune donnée");
     }
 
     else if (type === "alone") {
@@ -120,7 +120,7 @@ export default {
       data.forEach((row, idx) => {
         text += `**#${idx+1}** <@${row.userId}> : \`${formatDurationStandard(row.totalSec)}\` seul en salon\n`;
       });
-      embed.setTitle("👤 Les Solitaires (Sessions 100% seuls du début à la fin)").setDescription(text || "Aucune donnée");
+      embed.setTitle("Les Solitaires (Sessions 100% seuls du début à la fin)").setDescription(text || "Aucune donnée");
     }
 
     else if (type === "marathon") {
@@ -140,7 +140,7 @@ export default {
       data.forEach((row, idx) => {
         text += `**#${idx+1}** <@${row.userId}> : \`${formatDurationStandard(row.durationSec)}\` (dans \`#${row.channelName}\` le ${new Date(row.startDate).toLocaleDateString("fr-FR")})\n`;
       });
-      embed.setTitle("🛌 Les plus longues sessions individuelles ininterrompues").setDescription(text || "Aucune donnée");
+      embed.setTitle("Les plus longues sessions individuelles ininterrompues").setDescription(text || "Aucune donnée");
     }
 
     await interaction.editReply({ embeds: [embed] });

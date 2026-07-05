@@ -123,10 +123,10 @@ export default {
       const seasonQuery = db.select({
         season: sql<string>`
           CASE
-            WHEN strftime('%m', ${voiceSessions.joinTime}) IN ('03', '04', '05') THEN '🌸 Printemps'
-            WHEN strftime('%m', ${voiceSessions.joinTime}) IN ('06', '07', '08') THEN '☀️ Été'
-            WHEN strftime('%m', ${voiceSessions.joinTime}) IN ('09', '10', '11') THEN '🍂 Automne'
-            ELSE '❄️ Hiver'
+            WHEN strftime('%m', ${voiceSessions.joinTime}) IN ('03', '04', '05') THEN 'Printemps'
+            WHEN strftime('%m', ${voiceSessions.joinTime}) IN ('06', '07', '08') THEN 'Eté'
+            WHEN strftime('%m', ${voiceSessions.joinTime}) IN ('09', '10', '11') THEN 'Automne'
+            ELSE 'Hiver'
           END
         `,
         totalSec: sql<number>`SUM(${voiceSessions.durationSec})`
@@ -191,17 +191,17 @@ export default {
       });
 
       const embed = new EmbedBuilder()
-        .setTitle("🥇 Hall of Fame - Records Vocaux")
+        .setTitle("Hall of Fame - Records Vocaux")
         .setColor("#57F287")
         .addFields([
-          { name: "⏱ Session individuelle la plus longue", value: maxSession ? `<@${maxSession.userId}> :\n${formatDurationDetailed(maxSession.durationSec)} (le ${new Date(maxSession.timestamp).toLocaleDateString("fr-FR")})` : "Aucun" },
-          { name: "🔥 Activité continue record d'un salon (tous membres confondus)", value: `\`#${maxContinuousChan}\` :\n${formatDurationDetailed(maxContinuousSec)}` },
-          { name: "📅 Journée historique la plus active", value: topDay ? `\`${new Date(topDay.date).toLocaleDateString("fr-FR")}\` avec un cumul de :\n${formatDurationDetailed(topDay.dailySec)}` : "Aucun" },
-          { name: "🎙️ Le Salon Mythique (Salon le plus fréquenté)", value: topChan ? `\`#${topChan.channelName}\` avec un total de :\n${formatDurationDetailed(topChan.totalSec)}` : "Aucun" },
-          { name: "🗓️ Le Mois d'Or", value: topMonth ? `\`${topMonth.month}\` avec un total de :\n${formatDurationDetailed(topMonth.totalSec)}` : "Aucun" },
-          { name: "📈 Jour de la semaine le plus actif historiquement", value: weekDayQuery ? `\`${weekDayQuery.dayOfWeek}\` avec un cumul de :\n${formatDurationDetailed(weekDayQuery.totalSec)}` : "Aucun" },
-          { name: "🍃 La Saison d'Or (Saison la plus active)", value: seasonQuery ? `${seasonQuery.season} avec un cumul de :\n${formatDurationDetailed(seasonQuery.totalSec)}` : "Aucun" },
-          { name: "📉 La Session Éclair (Record du miss-click le plus rapide)", value: minSession ? `<@${minSession.userId}> avec une session de seulement \`${minSession.durationSec}s\` (le ${new Date(minSession.timestamp).toLocaleDateString("fr-FR")})` : "Aucun" }
+          { name: "Session individuelle la plus longue", value: maxSession ? `<@${maxSession.userId}> :\n${formatDurationDetailed(maxSession.durationSec)} (le ${new Date(maxSession.timestamp).toLocaleDateString("fr-FR")})` : "Aucun" },
+          { name: "Activité continue record d'un salon (tous membres confondus)", value: `\`#${maxContinuousChan}\` :\n${formatDurationDetailed(maxContinuousSec)}` },
+          { name: "Journée historique la plus active", value: topDay ? `\`${new Date(topDay.date).toLocaleDateString("fr-FR")}\` avec un cumul de :\n${formatDurationDetailed(topDay.dailySec)}` : "Aucun" },
+          { name: "Le Salon Mythique (Salon le plus fréquenté)", value: topChan ? `\`#${topChan.channelName}\` avec un total de :\n${formatDurationDetailed(topChan.totalSec)}` : "Aucun" },
+          { name: "Le Mois d'Or", value: topMonth ? `\`${topMonth.month}\` avec un total de :\n${formatDurationDetailed(topMonth.totalSec)}` : "Aucun" },
+          { name: "Jour de la semaine le plus actif historiquement", value: weekDayQuery ? `\`${weekDayQuery.dayOfWeek}\` avec un cumul de :\n${formatDurationDetailed(weekDayQuery.totalSec)}` : "Aucun" },
+          { name: "La Saison d'Or (Saison la plus active)", value: seasonQuery ? `${seasonQuery.season} avec un cumul de :\n${formatDurationDetailed(seasonQuery.totalSec)}` : "Aucun" },
+          { name: "La Session Éclair (Record du miss-click le plus rapide)", value: minSession ? `<@${minSession.userId}> avec une session de seulement \`${minSession.durationSec}s\` (le ${new Date(minSession.timestamp).toLocaleDateString("fr-FR")})` : "Aucun" }
         ])
         .setTimestamp();
 

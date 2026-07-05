@@ -49,7 +49,7 @@ interface DBBadgeQueryHost {
 export default {
   data: new SlashCommandBuilder()
     .setName("badges")
-    .setDescription("Découvre les rôles virtuels / trophées décernés aux membres"),
+    .setDescription("Découvre les rôles virtuels et trophées décernés aux membres"),
   async execute(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply();
     try {
@@ -160,20 +160,20 @@ export default {
       .get() as DBBadgeQueryHost | undefined;
 
       const embed = new EmbedBuilder()
-        .setTitle("🏆 Rôles Virtuels & Trophées Actuels")
+        .setTitle("Rôles Virtuels & Trophées Actuels")
         .setColor("#FEE75C")
-        .setDescription("Voici les champions actuels détenant les badges prestigieux et insolites du serveur :")
+        .setDescription("Voici les champions actuels détenant les badges du serveur :")
         .addFields([
-          { name: "🦉 Le Hibou Suprême (Activité de nuit, 00h-06h)", value: topNight ? `<@${topNight.userId}>\n${formatDurationDetailed(topNight.nightSec)}` : "Aucun" },
-          { name: "🏃‍♂️ Le Marathonien (Plus longue session d'affilée)", value: topMarathon ? `<@${topMarathon.userId}>\n${formatDurationDetailed(topMarathon.maxSec)}` : "Aucun" },
-          { name: "☀️ Le Coq du Matin (Activité matinale, 06h-12h)", value: topMorning ? `<@${topMorning.userId}>\n${formatDurationDetailed(topMorning.morningSec)}` : "Aucun" },
-          { name: "🎭 Le Caméléon (A exploré le plus de salons différents)", value: topCameleon ? `<@${topCameleon.userId}> avec \`${topCameleon.uniqueChans}\` salons visités.` : "Aucun" },
-          { name: "👻 Le Loup Solitaire (Plus grand nombre de sessions vocales)", value: topLone ? `<@${topLone.userId}> avec \`${topLone.sessionsCount}\` sessions.` : "Aucun" },
-          { name: "☕ Le Pilier de Comptoir (Plus de sessions de moins de 2 minutes)", value: topLizard ? `<@${topLizard.userId}> avec \`${topLizard.shortCount}\` apparitions éclairs.` : "Aucun" },
-          { name: "📈 Le Tryharder (Plus grand nombre de sessions > 4 heures)", value: topTryhard ? `<@${topTryhard.userId}> avec \`${topTryhard.longCount}\` sessions de brute.` : "Aucun" },
-          { name: "📅 Le Guerrier du Weekend (Le plus actif le samedi/dimanche)", value: topWeekend ? `<@${topWeekend.userId}>\n${formatDurationDetailed(topWeekend.weekendSec)}` : "Aucun" },
-          { name: "🔄 L'Instable (Le plus d'allers-retours)", value: topJumper ? `<@${topJumper.userId}> avec \`${topJumper.totalEvents}\` sauts de connexion.` : "Aucun" },
-          { name: "👑 Le Chaperon (Plus de temps dans des sessions de discussion de groupe)", value: topHost ? `<@${topHost.userId}>\n${formatDurationDetailed(topHost.hostSec)}` : "Aucun" }
+          { name: "Le Hibou Suprême (Activité de nuit, 00h-06h)", value: topNight ? `<@${topNight.userId}>\n${formatDurationDetailed(topNight.nightSec)}` : "Aucun" },
+          { name: "Le Marathonien (Plus longue session d'affilée)", value: topMarathon ? `<@${topMarathon.userId}>\n${formatDurationDetailed(topMarathon.maxSec)}` : "Aucun" },
+          { name: "Le Coq du Matin (Activité matinale, 06h-12h)", value: topMorning ? `<@${topMorning.userId}>\n${formatDurationDetailed(topMorning.morningSec)}` : "Aucun" },
+          { name: "Le Caméléon (A exploré le plus de salons différents)", value: topCameleon ? `<@${topCameleon.userId}> avec \`${topCameleon.uniqueChans}\` salons visités.` : "Aucun" },
+          { name: "Le Loup Solitaire (Plus grand nombre de sessions vocales)", value: topLone ? `<@${topLone.userId}> avec \`${topLone.sessionsCount}\` sessions.` : "Aucun" },
+          { name: "Le Pilier de Comptoir (Plus de sessions de moins de 2 minutes)", value: topLizard ? `<@${topLizard.userId}> avec \`${topLizard.shortCount}\` apparitions éclairs.` : "Aucun" },
+          { name: "Le Tryharder (Plus grand nombre de sessions > 4 heures)", value: topTryhard ? `<@${topTryhard.userId}> avec \`${topTryhard.longCount}\` sessions.` : "Aucun" },
+          { name: "Le Guerrier du Weekend (Le plus actif le samedi/dimanche)", value: topWeekend ? `<@${topWeekend.userId}>\n${formatDurationDetailed(topWeekend.weekendSec)}` : "Aucun" },
+          { name: "L'Instable (Le plus d'allers-retours)", value: topJumper ? `<@${topJumper.userId}> avec \`${topJumper.totalEvents}\` sauts de connexion.` : "Aucun" },
+          { name: "Le Chaperon (Plus de temps dans des sessions de discussion de groupe)", value: topHost ? `<@${topHost.userId}>\n${formatDurationDetailed(topHost.hostSec)}` : "Aucun" }
         ])
         .setTimestamp();
 

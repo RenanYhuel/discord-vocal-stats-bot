@@ -16,7 +16,7 @@ interface DBRankQuery {
   rank: number;
 }
 
-interface DBFavoriteChanQuery {
+interface DBFavoriteChan {
   channelName: string;
   totalSec: number;
 }
@@ -70,7 +70,7 @@ export default {
     .groupBy(voiceSessions.channelName)
     .orderBy(sql`SUM(${voiceSessions.durationSec}) DESC`)
     .limit(1)
-    .get() as DBFavoriteChanQuery | undefined;
+    .get() as DBFavoriteChan | undefined;
 
     const nightQuery = db.select({
       nightSec: sql<number>`SUM(${voiceSessions.durationSec})`
@@ -88,7 +88,7 @@ export default {
     const nightSec = nightQuery?.nightSec || 0;
     const daySec = statsQuery.totalSec - nightSec;
 
-    let trendText = "➡️ Stable";
+    let trendText = "Stable";
     const snapshots = db.select({
       rank: leaderboardSnapshots.rank
     })
@@ -123,7 +123,7 @@ export default {
       badges.push("👥 **Habitué** (>500 sessions)");
     }
     if (statsQuery.deafSec > statsQuery.totalSec * 0.20) {
-      badges.push("🔇 **Le Sourd** (>20% du temps en sourdine casque)");
+      badges.push("Le Sourd (>20% du temps en sourdine)");
     }
 
     const displayTotal = rank <= 10 ? formatDurationDetailed(statsQuery.totalSec) : formatDurationStandard(statsQuery.totalSec);
@@ -132,19 +132,19 @@ export default {
     const weeklyChart = generateWeeklyTextChart(target.id);
 
     const embed = new EmbedBuilder()
-      .setTitle(`📈 Statistiques de ${target.username} (Rang #${rank})`)
-      .setDescription(`**Tendance :** ${trendText}`)
+      .setTitle(`Statistiques de ${target.username} (Rang #${rank})`)
+      .setDescription(`Tendance : ${trendText}`)
       .setThumbnail(target.displayAvatarURL())
       .setColor("#2F3136")
       .addFields([
-        { name: "⏱ Temps total enregistré", value: displayTotal, inline: false },
-        { name: "🔇 Répartition AFK (Sourdine Casque)", value: `🟢 Temps Actif : \`${formatDurationStandard(statsQuery.activeSec)}\` (${Math.round((statsQuery.activeSec/statsQuery.totalSec)*100)}%)\n🔴 Sourdine Casque : \`${formatDurationStandard(statsQuery.deafSec)}\` (${Math.round((statsQuery.deafSec/statsQuery.totalSec)*100)}%)` },
-        { name: "📞 Sessions", value: `\`${statsQuery.totalSessions}\` sessions`, inline: true },
-        { name: "🔥 Record d'affilée", value: displayRecord, inline: false },
-        { name: "🎙 Salon favori", value: favoriteChan ? `\`#${favoriteChan.channelName}\` (${formatDurationStandard(favoriteChan.totalSec)})` : "Aucun" },
-        { name: "📊 Répartition horaire", value: `☀️ Journée : \`${formatDurationStandard(daySec)}\` (${Math.round((daySec/statsQuery.totalSec)*100)}%)\n🌙 Nuit (00h-06h) : \`${formatDurationStandard(nightSec)}\` (${Math.round((nightSec/statsQuery.totalSec)*100)}%)` },
-        { name: "📅 Activité des 7 derniers jours", value: weeklyChart || "Aucune activité récente.", inline: false },
-        { name: "🏆 Badges Virtuels", value: badges.length > 0 ? badges.join("\n") : "Aucun badge débloqué." }
+        { name: "Temps total enregistré", value: displayTotal, inline: false },
+        { name: "Répartition AFK (Sourdine Casque)", value: `Temps Actif : \`${formatDurationStandard(statsQuery.activeSec)}\` (${Math.round((statsQuery.activeSec/statsQuery.totalSec)*100)}%)\nSourdine Casque : \`${formatDurationStandard(statsQuery.deafSec)}\` (${Math.round((statsQuery.deafSec/statsQuery.totalSec)*100)}%)` },
+        { name: "Sessions", value: `\`${statsQuery.totalSessions}\` sessions`, inline: true },
+        { name: "Record d'affilée", value: displayRecord, inline: false },
+        { name: "Salon favori", value: favoriteChan ? `\`#${favoriteChan.channelName}\` (${formatDurationStandard(favoriteChan.totalSec)})` : "Aucun" },
+        { name: "Répartition horaire", value: `Journée : \`${formatDurationStandard(daySec)}\` (${Math.round((daySec/statsQuery.totalSec)*100)}%)\nNuit (00h-06h) : \`${formatDurationStandard(nightSec)}\` (${Math.round((nightSec/statsQuery.totalSec)*100)}%)` },
+        { name: "Activité des 7 derniers jours", value: weeklyChart || "Aucune activité récente.", inline: false },
+        { name: "Badges Virtuels", value: badges.length > 0 ? badges.join("\n") : "Aucun badge débloqué." }
       ])
       .setTimestamp();
 
