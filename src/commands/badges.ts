@@ -6,8 +6,9 @@ import {
 import db from "../database/db";
 import logger from "../utils/logger";
 import { formatDurationDetailed } from "../utils/formatters";
-import { voiceSessions } from "../database/schema";
-import { sql } from "drizzle-orm";
+import { voiceSessions, userAchievements } from "../database/schema";
+import { sql, inArray } from "drizzle-orm";
+import { ACHIEVEMENTS } from "../utils/achievementsList";
 
 interface DBBadgeQuerySimple {
     userId: string;
@@ -181,6 +182,26 @@ export default {
                 .limit(1)
                 .get() as DBBadgeQueryHost | undefined;
 
+            const bronzeIds = ACHIEVEMENTS.filter((a) => a.difficulty === "Bronze").map((a) => a.id);
+            const argentIds = ACHIEVEMENTS.filter((a) => a.difficulty === "Argent").map((a) => a.id);
+            const orIds = ACHIEVEMENTS.filter((a) => a.difficulty === "Or").map((a) => a.id);
+            const platineIds = ACHIEVEMENTS.filter((a) => a.difficulty === "Platine").map((a) => a.id);
+
+            const getBadgeUsers = (ids: string[]) => {
+                if (ids.length === 0) return "Aucun";
+                const rows = db
+                    .selectDistinct({ userId: userAchievements.userId })
+                    .from(userAchievements)
+                    .where(inArray(userAchievements.achievementId, ids))
+                    .all() as { userId: string }[];
+                return rows.length > 0 ? rows.map((r) => `<@${r.userId}>`).join(", ") : "Aucun";
+            };
+
+            const bronzeUsers = getBadgeUsers(bronzeIds);
+            const argentUsers = getBadgeUsers(argentIds);
+            const orUsers = getBadgeUsers(orIds);
+            const platineUsers = getBadgeUsers(platineIds);
+
             const embed = new EmbedBuilder()
                 .setTitle("Rôles Virtuels & Trophées Actuels")
                 .setColor("#FEE75C")
@@ -247,6 +268,22 @@ export default {
                         value: topHost
                             ? `<@${topHost.userId}>\n${formatDurationDetailed(topHost.hostSec)}`
                             : "Aucun",
+                    },
+                    {
+                        name: "Badge Bronze (Au moins 1 succès Bronze débloqué)",
+                        value: bronzeUsers,
+                    },
+                    {
+                        name: "Badge Argent (Au moins 1 succès Argent débloqué)",
+                        value: argentUsers,
+                    },
+                    {
+                        name: "Badge Or (Au moins 1 succès Or débloqué)",
+                        value: orUsers,
+                    },
+                    {
+                        name: "Badge Platine (Au moins 1 succès Platine débloqué)",
+                        value: platineUsers,
                     },
                 ])
                 .setTimestamp();

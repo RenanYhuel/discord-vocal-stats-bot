@@ -9,8 +9,9 @@ import {
     formatDurationStandard,
     generateWeeklyTextChart,
 } from "../utils/formatters";
-import { voiceSessions, leaderboardSnapshots } from "../database/schema";
+import { voiceSessions, leaderboardSnapshots, userAchievements } from "../database/schema";
 import { sql, eq, and, desc } from "drizzle-orm";
+import { ACHIEVEMENTS } from "../utils/achievementsList";
 
 interface DBStatsQuery {
     totalSec: number | null;
@@ -133,6 +134,17 @@ export default {
             }
         }
 
+        const achievementsCountResult = db
+            .select({
+                count: sql<number>`COUNT(*)`
+            })
+            .from(userAchievements)
+            .where(eq(userAchievements.userId, target.id))
+            .get() as { count: number } | undefined;
+
+        const achievementsCount = achievementsCountResult?.count || 0;
+        const achievementsPercentage = Math.round((achievementsCount / ACHIEVEMENTS.length) * 100);
+
         const badges: string[] = [];
         if (nightSec > statsQuery.totalSec * 0.4) {
             badges.push("🦉 **Hibou de Nuit** (>40% de nuit)");
@@ -160,7 +172,7 @@ export default {
 
         const embed = new EmbedBuilder()
             .setTitle(`Statistiques de ${target.username} (Rang #${rank})`)
-            .setDescription(`Tendance : ${trendText}`)
+            .setDescription(`Tendance : ${trendText}\nProgression Succès : \`${achievementsCount} / ${ACHIEVEMENTS.length}\` (${achievementsPercentage}%)`)
             .setThumbnail(target.displayAvatarURL())
             .setColor("#2F3136")
             .addFields([

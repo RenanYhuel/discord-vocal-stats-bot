@@ -6,7 +6,7 @@ import {
 import db from "../database/db";
 import logger from "../utils/logger";
 import { formatDurationDetailed } from "../utils/formatters";
-import { voiceSessions } from "../database/schema";
+import { voiceSessions, userAchievements } from "../database/schema";
 import { sql } from "drizzle-orm";
 
 interface DBMaxSessionQuery {
@@ -213,6 +213,17 @@ export default {
                 }
             });
 
+            const topHunter = db
+                .select({
+                    userId: userAchievements.userId,
+                    count: sql<number>`COUNT(*)`
+                })
+                .from(userAchievements)
+                .groupBy(userAchievements.userId)
+                .orderBy(sql`COUNT(*) DESC`)
+                .limit(1)
+                .get() as { userId: string; count: number } | undefined;
+
             const embed = new EmbedBuilder()
                 .setTitle("Hall of Fame - Records Vocaux")
                 .setColor("#57F287")
@@ -221,6 +232,12 @@ export default {
                         name: "Session individuelle la plus longue",
                         value: maxSession
                             ? `<@${maxSession.userId}> :\n${formatDurationDetailed(maxSession.durationSec)} (le ${new Date(maxSession.timestamp).toLocaleDateString("fr-FR")})`
+                            : "Aucun",
+                    },
+                    {
+                        name: "Chasseur de Trophées (Plus de succès débloqués)",
+                        value: topHunter
+                            ? `<@${topHunter.userId}> avec \`${topHunter.count}\` succès débloqués`
                             : "Aucun",
                     },
                     {

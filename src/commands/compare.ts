@@ -5,8 +5,9 @@ import {
 } from "discord.js";
 import db from "../database/db";
 import { formatDurationStandard } from "../utils/formatters";
-import { voiceSessions } from "../database/schema";
+import { voiceSessions, userAchievements } from "../database/schema";
 import { sql, eq, and } from "drizzle-orm";
+import { ACHIEVEMENTS } from "../utils/achievementsList";
 
 interface DBCompareStats {
     totalSec: number | null;
@@ -256,6 +257,21 @@ export default {
             )
             .get() as DBAloneTimeQuery | undefined;
 
+        const achCount1Result = db
+            .select({ count: sql<number>`COUNT(*)` })
+            .from(userAchievements)
+            .where(eq(userAchievements.userId, u1.id))
+            .get() as { count: number } | undefined;
+
+        const achCount2Result = db
+            .select({ count: sql<number>`COUNT(*)` })
+            .from(userAchievements)
+            .where(eq(userAchievements.userId, u2.id))
+            .get() as { count: number } | undefined;
+
+        const achCount1 = achCount1Result?.count || 0;
+        const achCount2 = achCount2Result?.count || 0;
+
         const n1 = night1?.nightSec || 0;
         const n2 = night2?.nightSec || 0;
 
@@ -288,6 +304,7 @@ export default {
                         `**Temps total :** \`${formatDurationStandard(t1)}\`\n` +
                         `**Temps actif :** \`${formatDurationStandard(stats1.activeSec)}\` (${100 - ratio1}%)\n` +
                         `**Sourdine :** \`${formatDurationStandard(stats1.deafSec)}\` (${ratio1}%)\n` +
+                        `**Succès débloqués :** \`${achCount1} / ${ACHIEVEMENTS.length}\` (${Math.round((achCount1 / ACHIEVEMENTS.length) * 100)}%)\n` +
                         `**Sessions :** \`${stats1.sessions}\` (~${Math.round(t1 / stats1.sessions / 60)}m/session)\n` +
                         `**Record d'affilée :** \`${formatDurationStandard(stats1.maxSec)}\`\n` +
                         `**Temps seul :** \`${formatDurationStandard(alone1Sec)}\` (${Math.round((alone1Sec / t1) * 100)}%)\n` +
@@ -301,6 +318,7 @@ export default {
                         `**Temps total :** \`${formatDurationStandard(t2)}\`\n` +
                         `**Temps actif :** \`${formatDurationStandard(stats2.activeSec)}\` (${100 - ratio2}%)\n` +
                         `**Sourdine :** \`${formatDurationStandard(stats2.deafSec)}\` (${ratio2}%)\n` +
+                        `**Succès débloqués :** \`${achCount2} / ${ACHIEVEMENTS.length}\` (${Math.round((achCount2 / ACHIEVEMENTS.length) * 100)}%)\n` +
                         `**Sessions :** \`${stats2.sessions}\` (~${Math.round(t2 / stats2.sessions / 60)}m/session)\n` +
                         `**Record d'affilée :** \`${formatDurationStandard(stats2.maxSec)}\`\n` +
                         `**Temps seul :** \`${formatDurationStandard(alone2Sec)}\` (${Math.round((alone2Sec / t2) * 100)}%)\n` +
