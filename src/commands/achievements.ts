@@ -29,7 +29,7 @@ export default {
                 )
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        await interaction.deferReply();
+        await interaction.deferReply({ ephemeral: true });
         const target = interaction.options.getUser("cible") || interaction.user;
         const filterCategory = interaction.options.getString("categorie");
 
