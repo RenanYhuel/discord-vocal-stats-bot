@@ -17,8 +17,9 @@ export async function checkAndAnnounceRecord(client: Client, userId: string, use
       return;
     }
 
+    // Recherche du max serveur basé sur le temps actif réel (activeSec)
     const serverMaxQuery = db.select({
-      maxSec: sql<number>`MAX(${voiceSessions.durationSec})`
+      maxSec: sql<number>`MAX(${voiceSessions.activeSec})`
     })
     .from(voiceSessions)
     .where(sql`${voiceSessions.userId} != ${userId}`)
@@ -36,14 +37,15 @@ export async function checkAndAnnounceRecord(client: Client, userId: string, use
       return;
     }
 
+    // Recherche du max personnel basé sur le temps actif réel (activeSec)
     const personalMaxQuery = db.select({
-      maxSec: sql<number>`MAX(${voiceSessions.durationSec})`
+      maxSec: sql<number>`MAX(${voiceSessions.activeSec})`
     })
     .from(voiceSessions)
     .where(
       and(
         eq(voiceSessions.userId, userId),
-        lt(voiceSessions.durationSec, durationSec)
+        lt(voiceSessions.activeSec, durationSec)
       )
     )
     .get() as { maxSec: number | null } | undefined;

@@ -106,7 +106,8 @@ export function recordCompletedSession(client: Client, userId: string, username:
       .where(and(eq(voiceDeafSessions.userId, userId), lte(voiceDeafSessions.endTime, leaveTimeStr)))
       .run();
 
-    checkAndAnnounceRecord(client, userId, username, durationSec);
+    // On passe activeSec pour le calcul des records afin d'exclure le temps passé muet
+    checkAndAnnounceRecord(client, userId, username, activeSec);
 
   } catch (err) {
     logger.error(`Erreur lors de l'enregistrement de la session pour ${username}`, err);
