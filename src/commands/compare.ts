@@ -17,6 +17,10 @@ interface DBFavoriteChan {
   totalSec: number;
 }
 
+interface DBCommonTimeQuery {
+  commonSec: number;
+}
+
 export default {
   data: new SlashCommandBuilder()
     .setName("compare")
@@ -109,15 +113,87 @@ export default {
     )
     .get() as { nightSec: number | null } | undefined;
 
+    // Calcul du temps passé dans le même salon au même moment (en commun)
+    const commonQuery = db.select({
+      commonSec: sql<number>`
+        SUM(
+          CASE 
+            WHEN strftime('%s', s1.leave_time) <= strftime('%s', s2.leave_time) 
+            THEN strftime('%s', s1.leave_time) 
+            ELSE strftime('%s', s2.leave_time) 
+          END 
+          - 
+          CASE 
+            WHEN strftime('%s', s1.join_time) >= strftime('%s', s2.join_time) 
+            THEN strftime('%s', s1.join_time) 
+            ELSE strftime('%s', s2.join_time) 
+          END
+        )
+      `
+    })
+    .from(sql`voice_sessions s1`)
+    .innerJoin(
+      sql`voice_sessions s2`, 
+      sql`s1.channel_name = s2.channel_name 
+          AND s1.user_id = ${u1.id} 
+          AND s2.user_id = ${u2.id} 
+          AND s1.join_time < s2.leave_time 
+          AND s1.leave_time > s2.join_time`
+    )
+    .get() as DBCommonTimeQuery | undefined;
+
+    // Calcul du temps passé uniquement en tête-à-tête (seulement les deux connectés dans le salon)
+    const privateDuoQuery = db.select({
+      commonSec: sql<number>`
+        SUM(
+          CASE 
+            WHEN strftime('%s', s1.leave_time) <= strftime('%s', s2.leave_time) 
+            THEN strftime('%s', s1.leave_time) 
+            ELSE strftime('%s', s2.leave_time) 
+          END 
+          - 
+          CASE 
+            WHEN strftime('%s', s1.join_time) >= strftime('%s', s2.join_time) 
+            THEN strftime('%s', s1.join_time) 
+            ELSE strftime('%s', s2.join_time) 
+          END
+        )
+      `
+    })
+    .from(sql`voice_sessions s1`)
+    .innerJoin(
+      sql`voice_sessions s2`, 
+      sql`s1.channel_name = s2.channel_name 
+          AND s1.user_id = ${u1.id} 
+          AND s2.user_id = ${u2.id} 
+          AND s1.join_time < s2.leave_time 
+          AND s1.leave_time > s2.join_time`
+    )
+    .where(
+      sql`NOT EXISTS (
+        SELECT 1 FROM voice_sessions s3 
+        WHERE s3.channel_name = s1.channel_name 
+          AND s3.user_id NOT IN (${u1.id}, ${u2.id})
+          AND s3.join_time < CASE WHEN s1.leave_time <= s2.leave_time THEN s1.leave_time ELSE s2.leave_time END
+          AND s3.leave_time > CASE WHEN s1.join_time >= s2.join_time THEN s1.join_time ELSE s2.join_time END
+      )`
+    )
+    .get() as DBCommonTimeQuery | undefined;
+
     const n1 = night1?.nightSec || 0;
     const n2 = night2?.nightSec || 0;
 
     const t1 = stats1.totalSec;
     const t2 = stats2.totalSec;
+
+    const commonSec = commonQuery?.commonSec || 0;
+    const privateDuoSec = privateDuoQuery?.commonSec || 0;
     
-    const diffText = t1 > t2 
+    let diffText = t1 > t2 
       ? `<@${u1.id}> a \`${formatDurationStandard(t1 - t2)}\` d'avance sur <@${u2.id}>.`
       : `<@${u2.id}> a \`${formatDurationStandard(t2 - t1)}\` d'avance sur <@${u1.id}>.`;
+
+    diffText += `\nTemps passé ensemble en vocal : \`${formatDurationStandard(commonSec)}\` (dont \`${formatDurationStandard(privateDuoSec)}\` en tête-à-tête).`;
 
     const ratio1 = Math.round((stats1.deafSec / t1) * 100);
     const ratio2 = Math.round((stats2.deafSec / t2) * 100);
