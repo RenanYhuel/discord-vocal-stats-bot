@@ -2,7 +2,7 @@ import db from "../database/db";
 import logger from "../utils/logger";
 import { voiceSessions, userAchievements } from "../database/schema";
 import { ACHIEVEMENTS } from "../utils/achievementsList";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 
 interface DBSession {
     userId: string;
@@ -13,9 +13,6 @@ interface DBSession {
 }
 
 export function runHistoricalAchievementsSync(): void {
-    logger.info("Vidage de la table des succes existants...");
-    db.delete(userAchievements).run();
-
     logger.info("Chargement complet des sessions en memoire...");
     const allSessionsDb = db
         .select({
@@ -66,7 +63,17 @@ export function runHistoricalAchievementsSync(): void {
             continue;
         }
 
-        logger.info(`Traitement de ${user.userName} (${userSessions.length} sessions)...`);
+        const unlockedResult = db
+            .select({
+                achievementId: userAchievements.achievementId,
+            })
+            .from(userAchievements)
+            .where(eq(userAchievements.userId, userId))
+            .all() as { achievementId: string }[];
+
+        const unlockedIds = new Set(unlockedResult.map((r) => r.achievementId));
+
+        logger.info(`Traitement de ${user.userName} (${userSessions.length} sessions, ${unlockedIds.size} succes deja acquis)...`);
 
         userSessions.sort(
             (a, b) => new Date(a.joinTime).getTime() - new Date(b.joinTime).getTime(),
@@ -79,7 +86,7 @@ export function runHistoricalAchievementsSync(): void {
         const rankIdx = leaderboard.findIndex((row) => row.userId === userId);
         const targetRank = rankIdx !== -1 ? rankIdx + 1 : 999;
 
-        const unlockedIds = new Set<string>();
+        let userNewAchievementsCount = 0;
 
         for (const session of userSessions) {
             runningActiveSec += session.activeSec;
@@ -130,11 +137,12 @@ export function runHistoricalAchievementsSync(): void {
                             unlockedAt: session.leaveTime,
                         })
                         .run();
+                    userNewAchievementsCount++;
                     totalInserted++;
                 }
             }
         }
-        logger.info(`-> ${unlockedIds.size} succes valides pour ${user.userName}`);
+        logger.info(`-> ${userNewAchievementsCount} nouveaux succes valides pour ${user.userName}`);
     }
 
     logger.info(`Synchronisation terminee. ${totalInserted} succes historiques inseres.`);
