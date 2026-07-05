@@ -141,7 +141,6 @@ export function recordCompletedSession(
             )
             .run();
 
-        // On passe activeSec pour le calcul des records afin d'exclure le temps passé muet
         checkAndAnnounceRecord(
             client,
             userId,

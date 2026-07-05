@@ -29,7 +29,6 @@ export async function checkAndAnnounceRecord(
             return;
         }
 
-        // Recherche du max serveur basé sur le temps actif réel (activeSec)
         const serverMaxQuery = db
             .select({
                 maxSec: sql<number>`MAX(${voiceSessions.activeSec})`,
@@ -106,7 +105,6 @@ export async function checkAndAnnounceRecord(
             return;
         }
 
-        // Recherche du max personnel basé sur le temps actif réel (activeSec)
         const personalMaxQuery = db
             .select({
                 maxSec: sql<number>`MAX(${voiceSessions.activeSec})`,

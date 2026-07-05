@@ -2,8 +2,7 @@ import { sqlite } from "./db";
 import logger from "../utils/logger";
 
 export function initSchema(): void {
-  // Création des tables si elles n'existent pas
-  sqlite.exec(`
+    sqlite.exec(`
     CREATE TABLE IF NOT EXISTS system_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT, 
       timestamp TEXT NOT NULL, 
@@ -13,14 +12,14 @@ export function initSchema(): void {
     );
   `);
 
-  sqlite.exec(`
+    sqlite.exec(`
     CREATE TABLE IF NOT EXISTS state (
       key TEXT PRIMARY KEY, 
       value TEXT NOT NULL
     );
   `);
 
-  sqlite.exec(`
+    sqlite.exec(`
     CREATE TABLE IF NOT EXISTS messages (
       id TEXT PRIMARY KEY, 
       channel_id TEXT NOT NULL, 
@@ -34,7 +33,7 @@ export function initSchema(): void {
     );
   `);
 
-  sqlite.exec(`
+    sqlite.exec(`
     CREATE TABLE IF NOT EXISTS voice_events (
       id INTEGER PRIMARY KEY AUTOINCREMENT, 
       message_id TEXT NOT NULL, 
@@ -48,7 +47,7 @@ export function initSchema(): void {
     );
   `);
 
-  sqlite.exec(`
+    sqlite.exec(`
     CREATE TABLE IF NOT EXISTS voice_current (
       user_id TEXT PRIMARY KEY, 
       username TEXT NOT NULL, 
@@ -60,7 +59,7 @@ export function initSchema(): void {
     );
   `);
 
-  sqlite.exec(`
+    sqlite.exec(`
     CREATE TABLE IF NOT EXISTS voice_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT, 
       user_id TEXT NOT NULL, 
@@ -76,7 +75,7 @@ export function initSchema(): void {
     CREATE INDEX IF NOT EXISTS idx_voice_sessions_join ON voice_sessions(join_time);
   `);
 
-  sqlite.exec(`
+    sqlite.exec(`
     CREATE TABLE IF NOT EXISTS voice_deaf_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id TEXT NOT NULL,
@@ -89,7 +88,7 @@ export function initSchema(): void {
     CREATE INDEX IF NOT EXISTS idx_voice_deaf_user ON voice_deaf_sessions(user_id);
   `);
 
-  sqlite.exec(`
+    sqlite.exec(`
     CREATE TABLE IF NOT EXISTS leaderboard_snapshots (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       snapshot_date TEXT NOT NULL, 
@@ -102,36 +101,57 @@ export function initSchema(): void {
     CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_date ON leaderboard_snapshots(snapshot_date);
   `);
 
-  // Migration progressive : Ajout des colonnes manquantes si la DB existait déjà
-  try {
-    // 1. Pour la table voice_sessions
-    const sessionsInfo = sqlite.prepare("PRAGMA table_info(voice_sessions)").all() as { name: string }[];
-    const hasActiveSec = sessionsInfo.some(col => col.name === "active_sec");
-    const hasDeafSec = sessionsInfo.some(col => col.name === "deaf_sec");
+    try {
+        const sessionsInfo = sqlite
+            .prepare("PRAGMA table_info(voice_sessions)")
+            .all() as { name: string }[];
+        const hasActiveSec = sessionsInfo.some(
+            (col) => col.name === "active_sec",
+        );
+        const hasDeafSec = sessionsInfo.some((col) => col.name === "deaf_sec");
 
-    if (!hasActiveSec) {
-      sqlite.exec("ALTER TABLE voice_sessions ADD COLUMN active_sec INTEGER DEFAULT 0;");
-      logger.info("[MIGRATION] Colonne 'active_sec' ajoutée à la table 'voice_sessions'.");
-    }
-    if (!hasDeafSec) {
-      sqlite.exec("ALTER TABLE voice_sessions ADD COLUMN deaf_sec INTEGER DEFAULT 0;");
-      logger.info("[MIGRATION] Colonne 'deaf_sec' ajoutée à la table 'voice_sessions'.");
-    }
+        if (!hasActiveSec) {
+            sqlite.exec(
+                "ALTER TABLE voice_sessions ADD COLUMN active_sec INTEGER DEFAULT 0;",
+            );
+            logger.info(
+                "[MIGRATION] Colonne 'active_sec' ajoutée à la table 'voice_sessions'.",
+            );
+        }
+        if (!hasDeafSec) {
+            sqlite.exec(
+                "ALTER TABLE voice_sessions ADD COLUMN deaf_sec INTEGER DEFAULT 0;",
+            );
+            logger.info(
+                "[MIGRATION] Colonne 'deaf_sec' ajoutée à la table 'voice_sessions'.",
+            );
+        }
 
-    // 2. Pour la table voice_current
-    const currentInfo = sqlite.prepare("PRAGMA table_info(voice_current)").all() as { name: string }[];
-    const hasIsDeaf = currentInfo.some(col => col.name === "is_deaf");
-    const hasDeafenedAt = currentInfo.some(col => col.name === "deafened_at");
+        const currentInfo = sqlite
+            .prepare("PRAGMA table_info(voice_current)")
+            .all() as { name: string }[];
+        const hasIsDeaf = currentInfo.some((col) => col.name === "is_deaf");
+        const hasDeafenedAt = currentInfo.some(
+            (col) => col.name === "deafened_at",
+        );
 
-    if (!hasIsDeaf) {
-      sqlite.exec("ALTER TABLE voice_current ADD COLUMN is_deaf INTEGER DEFAULT 0;");
-      logger.info("[MIGRATION] Colonne 'is_deaf' ajoutée à la table 'voice_current'.");
+        if (!hasIsDeaf) {
+            sqlite.exec(
+                "ALTER TABLE voice_current ADD COLUMN is_deaf INTEGER DEFAULT 0;",
+            );
+            logger.info(
+                "[MIGRATION] Colonne 'is_deaf' ajoutée à la table 'voice_current'.",
+            );
+        }
+        if (!hasDeafenedAt) {
+            sqlite.exec(
+                "ALTER TABLE voice_current ADD COLUMN deafened_at TEXT;",
+            );
+            logger.info(
+                "[MIGRATION] Colonne 'deafened_at' ajoutée à la table 'voice_current'.",
+            );
+        }
+    } catch (err) {
+        logger.error("Erreur lors de la migration des colonnes de la DB", err);
     }
-    if (!hasDeafenedAt) {
-      sqlite.exec("ALTER TABLE voice_current ADD COLUMN deafened_at TEXT;");
-      logger.info("[MIGRATION] Colonne 'deafened_at' ajoutée à la table 'voice_current'.");
-    }
-  } catch (err) {
-    logger.error("Erreur lors de la migration des colonnes de la DB", err);
-  }
 }

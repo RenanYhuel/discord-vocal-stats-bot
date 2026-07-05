@@ -143,7 +143,6 @@ export default {
             )
             .get() as { nightSec: number | null } | undefined;
 
-        // Calcul du temps passé dans le même salon au même moment (en commun)
         const commonQuery = db
             .select({
                 commonSec: sql<number>`
@@ -173,7 +172,6 @@ export default {
             )
             .get() as DBCommonTimeQuery | undefined;
 
-        // Calcul du temps passé uniquement en tête-à-tête (seulement les deux connectés dans le salon)
         const privateDuoQuery = db
             .select({
                 commonSec: sql<number>`
