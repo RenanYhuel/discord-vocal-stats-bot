@@ -5,3 +5,5 @@ database.sqlite-wal
 database.sqlite-shm
 logs/
 .env
+dist/
+.vscode/
