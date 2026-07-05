@@ -1,6 +1,8 @@
 import { sqlite } from "./db";
+import logger from "../utils/logger";
 
 export function initSchema(): void {
+  // Création des tables si elles n'existent pas
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS system_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -99,4 +101,22 @@ export function initSchema(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_date ON leaderboard_snapshots(snapshot_date);
   `);
+
+  // Migration progressive : Ajout des colonnes manquantes si la DB existait déjà
+  try {
+    const tableInfo = sqlite.prepare("PRAGMA table_info(voice_sessions)").all() as { name: string }[];
+    const hasActiveSec = tableInfo.some(col => col.name === "active_sec");
+    const hasDeafSec = tableInfo.some(col => col.name === "deaf_sec");
+
+    if (!hasActiveSec) {
+      sqlite.exec("ALTER TABLE voice_sessions ADD COLUMN active_sec INTEGER DEFAULT 0;");
+      logger.info("[MIGRATION] Colonne 'active_sec' ajoutée à la table 'voice_sessions'.");
+    }
+    if (!hasDeafSec) {
+      sqlite.exec("ALTER TABLE voice_sessions ADD COLUMN deaf_sec INTEGER DEFAULT 0;");
+      logger.info("[MIGRATION] Colonne 'deaf_sec' ajoutée à la table 'voice_sessions'.");
+    }
+  } catch (err) {
+    logger.error("Erreur lors de la migration des colonnes de la DB", err);
+  }
 }
