@@ -21,8 +21,9 @@ export default {
         .addStringOption((option) =>
             option
                 .setName("categorie")
-                .setDescription("Filtrer par type de succes")
+                .setDescription("Filtrer par type de succes ou voir le global")
                 .addChoices(
+                    { name: "Stats globales (global)", value: "global" },
                     { name: "Temps total (time)", value: "time" },
                     { name: "Marathons (marathon)", value: "marathon" },
                     { name: "Horaires (schedule)", value: "schedule" },
@@ -31,17 +32,12 @@ export default {
                     { name: "Duo (duo)", value: "duo" },
                     { name: "Speciaux (special)", value: "special" }
                 )
-        )
-        .addBooleanOption((option) =>
-            option
-                .setName("global")
-                .setDescription("Afficher les statistiques globales du serveur (optionnel)")
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         await interaction.deferReply();
-        const showGlobal = interaction.options.getBoolean("global") || false;
+        const filterCategory = interaction.options.getString("categorie");
 
-        if (showGlobal) {
+        if (filterCategory === "global") {
             const globalResult = db
                 .select({
                     achievementId: userAchievements.achievementId,
@@ -104,7 +100,6 @@ export default {
         }
 
         const target = interaction.options.getUser("cible") || interaction.user;
-        const filterCategory = interaction.options.getString("categorie");
 
         const unlockedResult = db
             .select({
