@@ -6,8 +6,148 @@ import {
     formatDurationStandard,
     formatDurationDetailed,
 } from "../utils/formatters";
-import { voiceSessions } from "../database/schema";
+import { voiceSessions, userAchievements } from "../database/schema";
 import { sql, eq, and } from "drizzle-orm";
+import { ACHIEVEMENTS } from "../utils/achievementsList";
+
+export async function checkAndAnnounceAchievements(
+    client: Client,
+    userId: string,
+    sessionActiveSec: number,
+    sessionDeafSec: number,
+    joinTimeStr: string,
+    leaveTimeStr: string,
+): Promise<void> {
+    if (!config.statsChannelId) {
+        return;
+    }
+
+    try {
+        const channel = (await client.channels
+            .fetch(config.statsChannelId)
+            .catch(() => null)) as TextChannel | null;
+        if (!channel) {
+            return;
+        }
+
+        const unlockedResult = db
+            .select({
+                achievementId: userAchievements.achievementId,
+            })
+            .from(userAchievements)
+            .where(eq(userAchievements.userId, userId))
+            .all() as { achievementId: string }[];
+
+        const unlockedIds = new Set(unlockedResult.map((r) => r.achievementId));
+
+        const pendingAchievements = ACHIEVEMENTS.filter(
+            (a) => !unlockedIds.has(a.id),
+        );
+
+        if (pendingAchievements.length === 0) {
+            return;
+        }
+
+        const totals = db
+            .select({
+                totalActiveSec: sql<number>`SUM(${voiceSessions.activeSec})`,
+                sessionsCount: sql<number>`COUNT(*)`,
+                maxSessionActiveSec: sql<number>`MAX(${voiceSessions.activeSec})`,
+            })
+            .from(voiceSessions)
+            .where(eq(voiceSessions.userId, userId))
+            .get() as {
+            totalActiveSec: number | null;
+            sessionsCount: number | null;
+            maxSessionActiveSec: number | null;
+        } | undefined;
+
+        const totalActiveSec = totals?.totalActiveSec || 0;
+        const sessionsCount = totals?.sessionsCount || 0;
+        const maxSessionActiveSec = totals?.maxSessionActiveSec || 0;
+
+        const leaderboard = db
+            .select({
+                userId: voiceSessions.userId,
+                totalSec: sql<number>`SUM(${voiceSessions.durationSec})`,
+            })
+            .from(voiceSessions)
+            .groupBy(voiceSessions.userId)
+            .orderBy(sql`SUM(${voiceSessions.durationSec}) DESC`)
+            .all() as { userId: string; totalSec: number }[];
+
+        const rankIdx = leaderboard.findIndex((row) => row.userId === userId);
+        const targetRank = rankIdx !== -1 ? rankIdx + 1 : 999;
+
+        const joinDate = new Date(joinTimeStr);
+        const joinHour = joinDate.getHours();
+        const activeDayOfWeek = joinDate.getDay();
+
+        const participants = db
+            .select({
+                userId: voiceSessions.userId,
+            })
+            .from(voiceSessions)
+            .where(
+                and(
+                    sql`${voiceSessions.leaveTime} > ${joinTimeStr}`,
+                    sql`${voiceSessions.joinTime} < ${leaveTimeStr}`,
+                    sql`${voiceSessions.userId} != ${userId}`,
+                ),
+            )
+            .all() as { userId: string }[];
+
+        const isSolo = participants.length === 0;
+        const userOverlapCount = new Set(participants.map((p) => p.userId)).size;
+
+        for (const achievement of pendingAchievements) {
+            const hasUnlocked = achievement.check({
+                totalActiveSec,
+                sessionsCount,
+                maxSessionActiveSec,
+                sessionActiveSec,
+                sessionDeafSec,
+                joinHour,
+                isSolo,
+                targetRank,
+                activeDayOfWeek,
+                totalSessionsLength: sessionsCount,
+                userOverlapCount,
+            });
+
+            if (hasUnlocked) {
+                const timestamp = new Date().toISOString();
+                db.insert(userAchievements)
+                    .values({
+                        userId,
+                        achievementId: achievement.id,
+                        unlockedAt: timestamp,
+                    })
+                    .run();
+
+                const embed = new EmbedBuilder()
+                    .setTitle("Succès débloqué !")
+                    .setColor(
+                        achievement.difficulty === "Platine"
+                            ? "#E5E4E2"
+                            : achievement.difficulty === "Or"
+                              ? "#FEE75C"
+                              : achievement.difficulty === "Argent"
+                                ? "#BCC6CC"
+                                : "#CD7F32",
+                    )
+                    .setDescription(
+                        `Félicitations à <@${userId}> qui vient de remporter le succès :\n\n**${achievement.title}** (${achievement.difficulty})\n*${achievement.description}*`,
+                    )
+                    .setTimestamp();
+
+                await channel.send({ embeds: [embed] }).catch(() => null);
+            }
+        }
+    } catch (err) {
+        logger.error("Erreur lors du calcul ou de l'annonce de succès", err);
+    }
+}
 
 export async function checkAndAnnounceRecord(
     client: Client,
@@ -37,8 +177,8 @@ export async function checkAndAnnounceRecord(
             .where(
                 and(
                     sql`${voiceSessions.userId} != ${userId}`,
-                    sql`${voiceSessions.joinTime} != ${joinTimeStr}`
-                )
+                    sql`${voiceSessions.joinTime} != ${joinTimeStr}`,
+                ),
             )
             .get() as { maxSec: number | null } | undefined;
 
@@ -60,7 +200,7 @@ export async function checkAndAnnounceRecord(
                     and(
                         sql`${voiceSessions.leaveTime} > ${joinTimeStr}`,
                         sql`${voiceSessions.joinTime} < ${leaveTimeStr}`,
-                        sql`${voiceSessions.userId} != ${userId}`
+                        sql`${voiceSessions.userId} != ${userId}`,
                     ),
                 )
                 .all() as Array<{
@@ -89,7 +229,7 @@ export async function checkAndAnnounceRecord(
                                       Math.max(
                                           participantJoinTime.getTime(),
                                           recordJoinTime.getTime(),
-                                       ),
+                                      ),
                               );
                               const overlapSec = Math.max(
                                   0,
@@ -119,8 +259,8 @@ export async function checkAndAnnounceRecord(
             .where(
                 and(
                     eq(voiceSessions.userId, userId),
-                    sql`${voiceSessions.joinTime} != ${joinTimeStr}`
-                )
+                    sql`${voiceSessions.joinTime} != ${joinTimeStr}`,
+                ),
             )
             .get() as { maxSec: number | null } | undefined;
 

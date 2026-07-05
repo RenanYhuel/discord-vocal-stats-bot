@@ -1,6 +1,6 @@
 import db from "../database/db";
 import logger from "../utils/logger";
-import { checkAndAnnounceRecord } from "./recordManager";
+import { checkAndAnnounceRecord, checkAndAnnounceAchievements } from "./recordManager";
 import config from "../config";
 import { Client, EmbedBuilder, TextChannel } from "discord.js";
 import { voiceSessions, voiceDeafSessions, state } from "../database/schema";
@@ -167,6 +167,15 @@ export function recordCompletedSession(
             userId,
             username,
             activeSec,
+            joinTimeStr,
+            leaveTimeStr,
+        );
+
+        checkAndAnnounceAchievements(
+            client,
+            userId,
+            activeSec,
+            deafSec,
             joinTimeStr,
             leaveTimeStr,
         );

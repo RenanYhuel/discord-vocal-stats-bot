@@ -78,3 +78,10 @@ export const leaderboardSnapshots = sqliteTable("leaderboard_snapshots", {
     rank: integer("rank").notNull(),
     totalTime: integer("total_time").notNull(),
 });
+
+export const userAchievements = sqliteTable("user_achievements", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("user_id").notNull(),
+    achievementId: text("achievement_id").notNull(),
+    unlockedAt: text("unlocked_at").notNull(),
+});
