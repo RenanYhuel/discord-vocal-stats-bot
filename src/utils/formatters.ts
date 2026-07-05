@@ -58,7 +58,7 @@ export function generateWeeklyTextChart(userId: string): string {
   })
   .from(voiceSessions)
   .where(sql`${voiceSessions.userId} = ${userId} AND ${voiceSessions.joinTime} >= ${chartDays[0].dateStr + "T00:00:00.000Z"}`)
-  .groupBy(sql`date`)
+  .groupBy(sql`strftime('%Y-%m-%d', datetime(${voiceSessions.joinTime}, '+2 hours'))`)
   .all() as DBChartDay[];
 
   chartDays.forEach(day => {
