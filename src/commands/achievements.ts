@@ -1,13 +1,8 @@
 import { SlashCommandBuilder, EmbedBuilder, ChatInputCommandInteraction } from "discord.js";
 import db from "../database/db";
-import { userAchievements, voiceSessions } from "../database/schema";
+import { userAchievements } from "../database/schema";
 import { ACHIEVEMENTS } from "../utils/achievementsList";
-import { eq, sql } from "drizzle-orm";
-
-interface DBGlobalStatRow {
-    achievementId: string;
-    unlockedCount: number;
-}
+import { eq } from "drizzle-orm";
 
 export default {
     data: new SlashCommandBuilder()
@@ -21,9 +16,8 @@ export default {
         .addStringOption((option) =>
             option
                 .setName("categorie")
-                .setDescription("Filtrer par type de succes ou voir le global")
+                .setDescription("Filtrer par type de succes")
                 .addChoices(
-                    { name: "Stats globales (global)", value: "global" },
                     { name: "Temps total (time)", value: "time" },
                     { name: "Marathons (marathon)", value: "marathon" },
                     { name: "Horaires (schedule)", value: "schedule" },
@@ -32,74 +26,17 @@ export default {
                     { name: "Duo (duo)", value: "duo" },
                     { name: "Speciaux (special)", value: "special" }
                 )
+        )
+        .addBooleanOption((option) =>
+            option
+                .setName("resume")
+                .setDescription("Afficher uniquement un resume de la progression (optionnel)")
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         await interaction.deferReply();
-        const filterCategory = interaction.options.getString("categorie");
-
-        if (filterCategory === "global") {
-            const globalResult = db
-                .select({
-                    achievementId: userAchievements.achievementId,
-                    unlockedCount: sql<number>`COUNT(*)`
-                })
-                .from(userAchievements)
-                .groupBy(userAchievements.achievementId)
-                .all() as DBGlobalStatRow[];
-
-            const globalStatsMap = new Map<string, number>();
-            globalResult.forEach((row) => {
-                globalStatsMap.set(row.achievementId, row.unlockedCount);
-            });
-
-            const totalUsersResult = db
-                .select({
-                    count: sql<number>`COUNT(DISTINCT ${voiceSessions.userId})`
-                })
-                .from(voiceSessions)
-                .get() as { count: number } | undefined;
-
-            const totalUsers = totalUsersResult?.count || 1;
-
-            const unlockedTotalResult = db
-                .select({
-                    count: sql<number>`COUNT(*)`
-                })
-                .from(userAchievements)
-                .get() as { count: number } | undefined;
-
-            const unlockedTotal = unlockedTotalResult?.count || 0;
-
-            const embed = new EmbedBuilder()
-                .setTitle("Statistiques Globales des Succes")
-                .setColor("#E67E22")
-                .setDescription(`Cumul total : \`${unlockedTotal}\` succes débloqués par \`${totalUsers}\` membres uniques.\n\nVoici les succes les plus rares du serveur :`)
-                .setTimestamp();
-
-            const achievementsWithStats = ACHIEVEMENTS.map((a) => {
-                const count = globalStatsMap.get(a.id) || 0;
-                const ratio = ((count / totalUsers) * 100).toFixed(1);
-                return {
-                    title: a.title,
-                    difficulty: a.difficulty,
-                    count,
-                    ratio: parseFloat(ratio)
-                };
-            });
-
-            achievementsWithStats.sort((a, b) => a.count - b.count);
-
-            let statsText = "";
-            achievementsWithStats.slice(0, 15).forEach((item) => {
-                statsText += `**${item.title}** (${item.difficulty}) : débloqué par \`${item.count}\` membre${item.count > 1 ? "s" : ""} (${item.ratio}%)\n`;
-            });
-
-            embed.addFields([{ name: "Les 15 succes les plus rares", value: statsText || "Aucun succes débloqué." }]);
-            await interaction.editReply({ embeds: [embed] });
-            return;
-        }
-
         const target = interaction.options.getUser("cible") || interaction.user;
+        const filterCategory = interaction.options.getString("categorie");
+        const showResume = interaction.options.getBoolean("resume") || false;
 
         const unlockedResult = db
             .select({
@@ -114,6 +51,72 @@ export default {
         unlockedResult.forEach((r) => {
             unlockedMap.set(r.achievementId, r.unlockedAt);
         });
+
+        if (showResume) {
+            const categories = {
+                time: { label: "Temps total", unlocked: 0, total: 0 },
+                marathon: { label: "Marathons", unlocked: 0, total: 0 },
+                schedule: { label: "Horaires", unlocked: 0, total: 0 },
+                afk: { label: "Sourdine / AFK", unlocked: 0, total: 0 },
+                solo: { label: "Solitaire", unlocked: 0, total: 0 },
+                duo: { label: "Duo", unlocked: 0, total: 0 },
+                special: { label: "Speciaux", unlocked: 0, total: 0 }
+            };
+
+            const difficulties = {
+                Bronze: { unlocked: 0, total: 0 },
+                Argent: { unlocked: 0, total: 0 },
+                Or: { unlocked: 0, total: 0 },
+                Platine: { unlocked: 0, total: 0 }
+            };
+
+            ACHIEVEMENTS.forEach((a) => {
+                const isUnlocked = unlockedMap.has(a.id);
+                if (categories[a.category]) {
+                    categories[a.category].total++;
+                    if (isUnlocked) categories[a.category].unlocked++;
+                }
+                if (difficulties[a.difficulty]) {
+                    difficulties[a.difficulty].total++;
+                    if (isUnlocked) difficulties[a.difficulty].unlocked++;
+                }
+            });
+
+            const sortedUnlocks = unlockedResult
+                .map(r => ({ id: r.achievementId, date: new Date(r.unlockedAt) }))
+                .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+            let datesText = "Aucun succès débloqué.";
+            if (sortedUnlocks.length > 0) {
+                const first = sortedUnlocks[0];
+                const last = sortedUnlocks[sortedUnlocks.length - 1];
+                const firstDetails = ACHIEVEMENTS.find(a => a.id === first.id);
+                const lastDetails = ACHIEVEMENTS.find(a => a.id === last.id);
+                datesText = `Premier succès : **${firstDetails?.title}** (${first.date.toLocaleDateString("fr-FR")})\nDernier succès : **${lastDetails?.title}** (${last.date.toLocaleDateString("fr-FR")})`;
+            }
+
+            const embed = new EmbedBuilder()
+                .setTitle(`Progression Succes - ${target.username}`)
+                .setColor("#9B59B6")
+                .setDescription(`Total débloqué : \`${unlockedResult.length} / ${ACHIEVEMENTS.length}\` (${Math.round((unlockedResult.length / ACHIEVEMENTS.length) * 100)}%)\n\n${datesText}`)
+                .setThumbnail(target.displayAvatarURL())
+                .setTimestamp();
+
+            let catText = "";
+            Object.values(categories).forEach((cat) => {
+                catText += `**${cat.label}** : \`${cat.unlocked} / ${cat.total}\`\n`;
+            });
+            embed.addFields([{ name: "Par Categorie", value: catText, inline: true }]);
+
+            let diffText = "";
+            Object.entries(difficulties).forEach(([diff, stat]) => {
+                diffText += `**${diff}** : \`${stat.unlocked} / ${stat.total}\`\n`;
+            });
+            embed.addFields([{ name: "Par Difficulté", value: diffText, inline: true }]);
+
+            await interaction.editReply({ embeds: [embed] });
+            return;
+        }
 
         let listToShow = ACHIEVEMENTS;
         if (filterCategory) {
