@@ -8,7 +8,6 @@ export interface BotConfig {
     carlLogChannelId: string;
     statsChannelId: string;
     adminId: string;
-    revealStartDate: Date;
     timezone: string;
 }
 
@@ -20,7 +19,6 @@ const config: BotConfig = {
         process.env.LOG_CHANNEL_ID || process.env.CARL_LOG_CHANNEL_ID || "",
     statsChannelId: process.env.STATS_ID || "",
     adminId: "767365180593537025",
-    revealStartDate: new Date("2026-06-27T16:00:00+02:00"),
     timezone: "Europe/Paris",
 };
 
