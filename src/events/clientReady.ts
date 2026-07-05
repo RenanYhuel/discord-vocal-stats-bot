@@ -3,7 +3,7 @@ import config from "../config";
 import db from "../database/db";
 import { recordCompletedSession } from "../managers/voiceManager";
 import { startCronTasks } from "../cron/scheduler";
-import { Client, TextChannel, Message } from "discord.js";
+import { Client, TextChannel, Message, Events } from "discord.js";
 import { messages, state, voiceEvents, voiceCurrent } from "../database/schema";
 import { eq, and, lte, desc } from "drizzle-orm";
 
@@ -20,7 +20,7 @@ interface DBActiveUserQuery {
 }
 
 export default {
-    name: "ready",
+    name: Events.ClientReady,
     once: true,
     async execute(client: Client): Promise<void> {
         logger.info(`🤖 Connecté en tant que ${client.user?.tag}`);
