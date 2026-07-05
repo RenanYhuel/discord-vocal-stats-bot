@@ -48,12 +48,6 @@ export default {
 
         const unlockedTotal = unlockedTotalResult?.count || 0;
 
-        const embed = new EmbedBuilder()
-            .setTitle("Statistiques Globales des Succes")
-            .setColor("#E67E22")
-            .setDescription(`Cumul total : \`${unlockedTotal}\` succes débloqués par \`${totalUsers}\` membres uniques.\n\nVoici les succes les plus rares du serveur :`)
-            .setTimestamp();
-
         const achievementsWithStats = ACHIEVEMENTS.map((a) => {
             const count = globalStatsMap.get(a.id) || 0;
             const ratio = ((count / totalUsers) * 100).toFixed(1);
@@ -67,12 +61,40 @@ export default {
 
         achievementsWithStats.sort((a, b) => a.count - b.count);
 
+        const embed = new EmbedBuilder()
+            .setTitle("Statistiques Globales des Succès")
+            .setColor("#E67E22")
+            .addFields([
+                { name: "Membres participants", value: `\`${totalUsers}\` joueurs`, inline: true },
+                { name: "Succès débloqués", value: `\`${unlockedTotal}\` obtentions`, inline: true }
+            ])
+            .setTimestamp();
+
         let statsText = "";
-        achievementsWithStats.slice(0, 15).forEach((item) => {
-            statsText += `**${item.title}** (${item.difficulty}) : débloqué par \`${item.count}\` membre${item.count > 1 ? "s" : ""} (${item.ratio}%)\n`;
+        achievementsWithStats.slice(0, 10).forEach((item, idx) => {
+            statsText += `**#${idx + 1} ${item.title}** (${item.difficulty})\n↳ débloqué par \`${item.count}\` membre${item.count > 1 ? "s" : ""} (${item.ratio}%)\n\n`;
+        });
+        embed.addFields([{ name: "Les 10 succès les plus rares du serveur", value: statsText || "Aucun succès débloqué pour le moment." }]);
+
+        const achievementsByDifficulty = {
+            Bronze: 0,
+            Argent: 0,
+            Or: 0,
+            Platine: 0
+        };
+
+        achievementsWithStats.forEach((a) => {
+            if (a.count > 0) {
+                achievementsByDifficulty[a.difficulty as keyof typeof achievementsByDifficulty] += a.count;
+            }
         });
 
-        embed.addFields([{ name: "Les 15 succes les plus rares", value: statsText || "Aucun succes débloqué." }]);
+        let difficultyText = "";
+        Object.entries(achievementsByDifficulty).forEach(([diff, count]) => {
+            difficultyText += `**${diff}** : \`${count}\` débloqués\n`;
+        });
+        embed.addFields([{ name: "Cumul par difficulté", value: difficultyText, inline: false }]);
+
         await interaction.editReply({ embeds: [embed] });
     },
 };
