@@ -1,8 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder, ChatInputCommandInteraction } from "discord.js";
-import db from "../../src/database/db";
-import { isUserRevealed } from "../../src/managers/revealManager";
-import { formatDurationDetailed, formatDurationStandard, generateWeeklyTextChart } from "../../src/utils/formatters";
-import { voiceSessions, leaderboardSnapshots } from "../../src/database/schema";
+import db from "../database/db";
+import { formatDurationDetailed, formatDurationStandard, generateWeeklyTextChart } from "../utils/formatters";
+import { voiceSessions, leaderboardSnapshots } from "../database/schema";
 import { sql, eq, and, desc } from "drizzle-orm";
 
 interface DBStatsQuery {
@@ -30,11 +29,6 @@ export default {
   async execute(interaction: ChatInputCommandInteraction): Promise<void> {
     await interaction.deferReply();
     const target = interaction.options.getUser("cible") || interaction.user;
-
-    if (!isUserRevealed(target.id)) {
-      await interaction.editReply("🔒 **Les statistiques de ce membre font partie du Top 10 secret. Elles seront dévoilées dans les prochains jours. Reste à l'écoute !**");
-      return;
-    }
 
     const statsQuery = db.select({
       totalSec: sql<number>`SUM(${voiceSessions.durationSec})`,

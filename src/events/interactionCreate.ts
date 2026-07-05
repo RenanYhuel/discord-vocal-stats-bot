@@ -1,6 +1,5 @@
 import logger from "../utils/logger";
 import db from "../database/db";
-import { getRevealedRanksCount } from "../managers/revealManager";
 import { generateLeaderboardEmbed, generateLeaderboardButtons } from "../commands/top";
 import { CommandInteraction, ButtonInteraction, Client } from "discord.js";
 import { voiceSessions } from "../database/schema";
@@ -33,10 +32,9 @@ export default {
         .orderBy(sql`SUM(${voiceSessions.durationSec}) DESC`)
         .all() as DBLeaderboardRow[];
 
-        const revealedRanks = getRevealedRanksCount();
         const totalPages = Math.ceil(leaderboard.length / 10);
 
-        const embed = generateLeaderboardEmbed(leaderboard, page, totalPages, revealedRanks);
+        const embed = generateLeaderboardEmbed(leaderboard, page, totalPages);
         const row = generateLeaderboardButtons(page, totalPages);
 
         await interaction.editReply({ embeds: [embed], components: [row] }).catch(() => null);

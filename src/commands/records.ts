@@ -1,8 +1,8 @@
 import { SlashCommandBuilder, EmbedBuilder, CommandInteraction } from "discord.js";
-import db from "../../src/database/db";
-import logger from "../../src/utils/logger";
-import { formatDurationDetailed } from "../../src/utils/formatters";
-import { voiceSessions } from "../../src/database/schema";
+import db from "../database/db";
+import logger from "../utils/logger";
+import { formatDurationDetailed } from "../utils/formatters";
+import { voiceSessions } from "../database/schema";
 import { sql } from "drizzle-orm";
 
 interface DBMaxSessionQuery {

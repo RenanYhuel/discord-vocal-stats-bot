@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder, ChatInputCommandInteraction } from "discord.js";
-import db from "../../src/database/db";
-import { formatDurationStandard } from "../../src/utils/formatters";
-import { voiceSessions } from "../../src/database/schema";
+import db from "../database/db";
+import { formatDurationStandard } from "../utils/formatters";
+import { voiceSessions } from "../database/schema";
 import { sql } from "drizzle-orm";
 
 interface DBNightQuery {

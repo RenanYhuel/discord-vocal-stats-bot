@@ -1,8 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, CommandInteraction } from "discord.js";
-import db from "../../src/database/db";
-import { getRevealedRanksCount } from "../../src/managers/revealManager";
-import { formatDurationDetailed, formatDurationStandard } from "../../src/utils/formatters";
-import { voiceSessions } from "../../src/database/schema";
+import db from "../database/db";
+import { formatDurationDetailed, formatDurationStandard } from "../utils/formatters";
+import { voiceSessions } from "../database/schema";
 import { sql } from "drizzle-orm";
 
 interface DBLeaderboardRow {
@@ -11,11 +10,10 @@ interface DBLeaderboardRow {
   totalSec: number;
 }
 
-export function generateLeaderboardEmbed(leaderboard: DBLeaderboardRow[], page: number, totalPages: number, revealedRanks: number): EmbedBuilder {
+export function generateLeaderboardEmbed(leaderboard: DBLeaderboardRow[], page: number, totalPages: number): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setTitle("🏆 Classement Vocal Général")
     .setColor("#5865F2")
-    .setDescription(revealedRanks < 10 ? "ℹ️ *Dévoilement progressif actif.*" : "✨ *Toutes les places sont révélées !*")
     .setFooter({ text: `Page ${page} / ${totalPages}` })
     .setTimestamp();
 
@@ -26,17 +24,7 @@ export function generateLeaderboardEmbed(leaderboard: DBLeaderboardRow[], page: 
   pageData.forEach((row, idx) => {
     const position = startIdx + idx + 1;
     const formatTime = position <= 10 ? formatDurationDetailed(row.totalSec) : formatDurationStandard(row.totalSec);
-
-    if (position <= 10) {
-      const rankToReveal = 11 - position;
-      if (revealedRanks >= rankToReveal) {
-        listText += `**#${position}** <@${row.userId}> :\n${formatTime}\n\n`;
-      } else {
-        listText += `**#${position}** 🔒 ||*Rang masqué (Dévoilement progressif)*||\n\n`;
-      }
-    } else {
-      listText += `**#${position}** <@${row.userId}> : \`${formatTime}\`\n`;
-    }
+    listText += `**#${position}** <@${row.userId}> : ${position <= 10 ? "\n" + formatTime + "\n\n" : `\`${formatTime}\`\n`}`;
   });
 
   embed.addFields([{ name: "Positions", value: listText || "Aucune donnée sur cette page." }]);
@@ -62,7 +50,7 @@ export function generateLeaderboardButtons(page: number, totalPages: number): Ac
 export default {
   data: new SlashCommandBuilder()
     .setName("top")
-    .setDescription("Classement général des membres en vocal (Reveal progressif)"),
+    .setDescription("Classement général des membres en vocal"),
   async execute(interaction: CommandInteraction): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
 
@@ -76,10 +64,9 @@ export default {
     .orderBy(sql`SUM(${voiceSessions.durationSec}) DESC`)
     .all() as DBLeaderboardRow[];
 
-    const revealedRanks = getRevealedRanksCount();
     const totalPages = Math.ceil(leaderboard.length / 10) || 1;
 
-    const embed = generateLeaderboardEmbed(leaderboard, 1, totalPages, revealedRanks);
+    const embed = generateLeaderboardEmbed(leaderboard, 1, totalPages);
     const row = generateLeaderboardButtons(1, totalPages);
 
     await interaction.editReply({ embeds: [embed], components: [row] });

@@ -1,7 +1,6 @@
 import db from "../database/db";
 import logger from "../utils/logger";
 import config from "../config";
-import * as revealManager from "../managers/revealManager";
 import { EmbedBuilder, Client, TextChannel } from "discord.js";
 import { formatDurationDetailed } from "../utils/formatters";
 import { voiceSessions, leaderboardSnapshots, state } from "../database/schema";
@@ -19,7 +18,7 @@ interface DBSnapshotRow {
 }
 
 export function startCronTasks(client: Client): void {
-  logger.info("Planificateur de tâches démarré (Bilan + Snapshots + Reveal).");
+  logger.info("Planificateur de tâches démarré (Bilan + Snapshots).");
 
   setInterval(async () => {
     try {
@@ -36,16 +35,6 @@ export function startCronTasks(client: Client): void {
         if (!alreadySent) {
           db.insert(state).values({ key, value: "sent" }).run();
           await sendMonthlyReport(client);
-        }
-      }
-
-      if (parisHour === 16 && config.statsChannelId) {
-        const todayKey = `reveal_announced_${parisDateStr}`;
-        const alreadyAnnounced = db.select().from(state).where(eq(state.key, todayKey)).get();
-
-        if (!alreadyAnnounced) {
-          db.insert(state).values({ key: todayKey, value: "sent" }).run();
-          await revealManager.triggerRevealAnnonceByRank(client, 11 - revealManager.getRevealedRanksCount());
         }
       }
 
