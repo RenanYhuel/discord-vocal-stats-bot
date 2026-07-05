@@ -7,7 +7,7 @@ import {
     formatDurationDetailed,
 } from "../utils/formatters";
 import { voiceSessions } from "../database/schema";
-import { sql, eq, and, lt } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 
 export async function checkAndAnnounceRecord(
     client: Client,
@@ -34,7 +34,12 @@ export async function checkAndAnnounceRecord(
                 maxSec: sql<number>`MAX(${voiceSessions.activeSec})`,
             })
             .from(voiceSessions)
-            .where(sql`${voiceSessions.userId} != ${userId}`)
+            .where(
+                and(
+                    sql`${voiceSessions.userId} != ${userId}`,
+                    sql`${voiceSessions.joinTime} != ${joinTimeStr}`
+                )
+            )
             .get() as { maxSec: number | null } | undefined;
 
         const serverMax = serverMaxQuery?.maxSec || 0;
@@ -55,6 +60,7 @@ export async function checkAndAnnounceRecord(
                     and(
                         sql`${voiceSessions.leaveTime} > ${joinTimeStr}`,
                         sql`${voiceSessions.joinTime} < ${leaveTimeStr}`,
+                        sql`${voiceSessions.userId} != ${userId}`
                     ),
                 )
                 .all() as Array<{
@@ -83,7 +89,7 @@ export async function checkAndAnnounceRecord(
                                       Math.max(
                                           participantJoinTime.getTime(),
                                           recordJoinTime.getTime(),
-                                      ),
+                                       ),
                               );
                               const overlapSec = Math.max(
                                   0,
@@ -113,8 +119,8 @@ export async function checkAndAnnounceRecord(
             .where(
                 and(
                     eq(voiceSessions.userId, userId),
-                    lt(voiceSessions.activeSec, durationSec),
-                ),
+                    sql`${voiceSessions.joinTime} != ${joinTimeStr}`
+                )
             )
             .get() as { maxSec: number | null } | undefined;
 
