@@ -1,9 +1,9 @@
 services:
-  statsbot:
-    build: .
-    container_name: statsbot
-    restart: unless-stopped
-    volumes:
-      - ./data:/app/data
-    env_file:
-      - .env
+    statsbot:
+        build: .
+        container_name: statsbot
+        restart: unless-stopped
+        volumes:
+            - ./data:/app/data
+        env_file:
+            - .env

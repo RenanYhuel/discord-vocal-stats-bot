@@ -7,16 +7,13 @@ import { loadEvents } from "./handlers/eventHandler";
 initSchema();
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ],
-  partials: [
-    Partials.Message,
-    Partials.Channel
-  ]
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+    ],
+    partials: [Partials.Message, Partials.Channel],
 });
 
 loadCommands(client);
