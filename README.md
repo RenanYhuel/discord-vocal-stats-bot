@@ -1,10 +1,10 @@
-# 📊 Discord Vocal Stats Bot
+# Discord Vocal Stats Bot
 
 Bot Discord de statistiques et de présence vocale écrit en TypeScript strict avec Drizzle ORM et SQLite. Il suit l'activité vocale des membres et intègre la détection et la soustraction automatique du temps passé en sourdine casque.
 
 ---
 
-## ⚙️ Configuration (.env)
+## Configuration (.env)
 
 Créez un fichier `.env` à la racine avec les variables suivantes :
 
@@ -18,7 +18,7 @@ STATS_ID=id_salon_annonces_stats
 
 ---
 
-## 🛠️ Commandes Disponibles
+## Commandes Disponibles
 
 * **/top** : Affiche le classement général des membres en vocal sur le serveur.
 * **/stats `[cible]`** : Affiche les statistiques détaillées (temps d'activité, pourcentage de sourdine casque, salon favori, tendance, graphiques d'activité sur 7 jours et badges virtuels).
@@ -29,7 +29,7 @@ STATS_ID=id_salon_annonces_stats
 
 ---
 
-## 💻 Lancement en Développement
+## Lancement en Développement
 
 ```bash
 # Installer les dépendances
@@ -45,7 +45,7 @@ pnpm run start
 
 ---
 
-## 🐳 Déploiement avec Docker / Docker Compose
+## Déploiement avec Docker / Docker Compose
 
 Le projet est configuré pour être conteneurisé facilement en montant la base de données dans un volume persistant.
 
