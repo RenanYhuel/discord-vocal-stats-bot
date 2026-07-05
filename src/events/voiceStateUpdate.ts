@@ -276,7 +276,6 @@ export default {
                     await checkRankOvertake(
                         client,
                         userId,
-                        username,
                         currentDurationSec,
                     );
                 }

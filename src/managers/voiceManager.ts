@@ -28,7 +28,6 @@ function getFullLeaderboard(): DBLeaderboardRow[] {
 export async function checkRankOvertake(
     client: Client,
     userId: string,
-    username: string,
     sessionSec: number,
 ): Promise<void> {
     if (!config.statsChannelId) {
@@ -63,7 +62,7 @@ export async function checkRankOvertake(
                     .setTitle("Dépassement de classement en direct")
                     .setColor("#3498DB")
                     .setDescription(
-                        `Avec sa session vocale en cours, <@${username}> vient de dépasser <@${targetUser.userId}> et s'empare virtuellement du **Rang #${i + 1}** !`,
+                        `Avec sa session vocale en cours, <@${userId}> vient de dépasser <@${targetUser.userId}> et s'empare virtuellement du **Rang #${i + 1}** !`,
                     )
                     .setTimestamp();
 
