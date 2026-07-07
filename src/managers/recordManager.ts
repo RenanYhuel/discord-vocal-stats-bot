@@ -152,7 +152,6 @@ export async function checkAndAnnounceAchievements(
 export async function checkAndAnnounceRecord(
     client: Client,
     userId: string,
-    username: string,
     durationSec: number,
     joinTimeStr: string,
     leaveTimeStr: string,
@@ -271,7 +270,7 @@ export async function checkAndAnnounceRecord(
                 .setTitle("Nouveau record personnel")
                 .setColor("#57F287")
                 .setDescription(
-                    `Félicitations à <@${username}> qui vient de battre son propre record de temps passé en vocal en une seule session !\n\n**Ancien record :** \`${formatDurationStandard(personalMax)}\`\n**Nouveau record personnel :** \`${formatDurationStandard(durationSec)}\``,
+                    `Félicitations à <@${userId}> qui vient de battre son propre record de temps passé en vocal en une seule session !\n\n**Ancien record :** \`${formatDurationStandard(personalMax)}\`\n**Nouveau record personnel :** \`${formatDurationStandard(durationSec)}\``,
                 )
                 .setTimestamp();
             await channel.send({ embeds: [embed] }).catch(() => null);

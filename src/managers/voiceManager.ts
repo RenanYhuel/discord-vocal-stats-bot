@@ -165,7 +165,6 @@ export function recordCompletedSession(
         checkAndAnnounceRecord(
             client,
             userId,
-            username,
             activeSec,
             joinTimeStr,
             leaveTimeStr,
