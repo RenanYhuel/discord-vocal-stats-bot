@@ -22,7 +22,6 @@ export default {
                         .setName("categorie")
                         .setDescription("Filtrer par type de succès (optionnel)")
                         .addChoices(
-                            { name: "Résumé (resume)", value: "resume" },
                             { name: "Temps total (time)", value: "time" },
                             { name: "Marathons (marathon)", value: "marathon" },
                             { name: "Horaires (schedule)", value: "schedule" },
@@ -49,7 +48,6 @@ export default {
                         .setName("categorie")
                         .setDescription("Filtrer par type de succès (optionnel)")
                         .addChoices(
-                            { name: "Résumé (resume)", value: "resume" },
                             { name: "Temps total (time)", value: "time" },
                             { name: "Marathons (marathon)", value: "marathon" },
                             { name: "Horaires (schedule)", value: "schedule" },
@@ -173,7 +171,7 @@ export default {
             ? interaction.options.getUser("membre", true) 
             : interaction.user;
 
-        const filterCategory = interaction.options.getString("categorie") || "resume";
+        const filterCategory = interaction.options.getString("categorie");
 
         const unlockedResult = db
             .select({
@@ -189,7 +187,7 @@ export default {
             unlockedMap.set(r.achievementId, r.unlockedAt);
         });
 
-        if (filterCategory === "resume") {
+        if (!filterCategory) {
             const categories = {
                 time: { label: "Temps total", unlocked: 0, total: 0 },
                 marathon: { label: "Marathons", unlocked: 0, total: 0 },
