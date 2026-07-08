@@ -25,7 +25,8 @@ export default {
                     { name: "Sourdine / AFK (afk)", value: "afk" },
                     { name: "Solitaire (solo)", value: "solo" },
                     { name: "Duo (duo)", value: "duo" },
-                    { name: "Speciaux (special)", value: "special" }
+                    { name: "Speciaux (special)", value: "special" },
+                    { name: "Technique (skill)", value: "skill" }
                 )
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -55,7 +56,8 @@ export default {
                 afk: { label: "Sourdine / AFK", unlocked: 0, total: 0 },
                 solo: { label: "Solitaire", unlocked: 0, total: 0 },
                 duo: { label: "Duo", unlocked: 0, total: 0 },
-                special: { label: "Speciaux", unlocked: 0, total: 0 }
+                special: { label: "Speciaux", unlocked: 0, total: 0 },
+                skill: { label: "Technique", unlocked: 0, total: 0 }
             };
 
             const difficulties = {
@@ -67,9 +69,9 @@ export default {
 
             ACHIEVEMENTS.forEach((a) => {
                 const isUnlocked = unlockedMap.has(a.id);
-                if (categories[a.category]) {
-                    categories[a.category].total++;
-                    if (isUnlocked) categories[a.category].unlocked++;
+                if (categories[a.category as keyof typeof categories]) {
+                    categories[a.category as keyof typeof categories].total++;
+                    if (isUnlocked) categories[a.category as keyof typeof categories].unlocked++;
                 }
                 if (difficulties[a.difficulty]) {
                     difficulties[a.difficulty].total++;
