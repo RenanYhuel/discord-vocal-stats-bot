@@ -78,7 +78,7 @@ export default {
                         },
                     })
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
         } else if (
@@ -132,7 +132,7 @@ export default {
                 db.delete(voiceCurrent)
                     .where(eq(voiceCurrent.userId, userId))
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
         } else if (
@@ -222,7 +222,7 @@ export default {
                         },
                     })
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
         }

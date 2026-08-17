@@ -186,7 +186,7 @@ async function catchUp(client: Client): Promise<void> {
                                         );
                                     }
                                 }
-                            } catch (err) {
+                            } catch {
                                 // à ignorer
                             }
                         }
@@ -313,7 +313,7 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
                     dbUser.joined_at,
                     leaveTimestamp,
                 );
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
             db.delete(voiceCurrent)
@@ -358,7 +358,7 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
                         dbUser.joined_at,
                         leaveTimestamp,
                     );
-                } catch (err) {
+                } catch {
                     // à ignorer
                 }
             }
@@ -377,7 +377,7 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
                         raw: JSON.stringify({ source: "sync" }),
                     })
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
 
@@ -423,7 +423,7 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
                         raw: JSON.stringify({ source: "sync" }),
                     })
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
 
