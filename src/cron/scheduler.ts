@@ -45,6 +45,17 @@ export function startCronTasks(client: Client): void {
                 weekday: "short",
             });
 
+            db.insert(state)
+                .values({
+                    key: "bot_last_seen_at",
+                    value: now.toISOString(),
+                })
+                .onConflictDoUpdate({
+                    target: state.key,
+                    set: { value: now.toISOString() },
+                })
+                .run();
+
             if (parisDay === 1 && parisHour === 12) {
                 const key = `monthly_report_${now.getFullYear()}_${now.getMonth() + 1}`;
                 const alreadySent = db

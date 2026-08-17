@@ -6,7 +6,7 @@ import {
     checkRankOvertake,
 } from "../managers/voiceManager";
 import { VoiceState, Client } from "discord.js";
-import { voiceEvents, voiceCurrent } from "../database/schema";
+import { voiceEvents, voiceCurrent, state } from "../database/schema";
 import { eq } from "drizzle-orm";
 
 interface DBActiveQuery {
@@ -28,6 +28,17 @@ export default {
             : "Inconnu";
         const timestamp = new Date().toISOString();
         const unixSec = Math.floor(new Date(timestamp).getTime() / 5000);
+
+        db.insert(state)
+            .values({
+                key: "bot_last_seen_at",
+                value: timestamp,
+            })
+            .onConflictDoUpdate({
+                target: state.key,
+                set: { value: timestamp },
+            })
+            .run();
 
         if (!oldState.channelId && newState.channelId && newState.channel) {
             try {

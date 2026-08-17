@@ -4,7 +4,13 @@ import db from "../database/db";
 import { recordCompletedSession } from "../managers/voiceManager";
 import { startCronTasks } from "../cron/scheduler";
 import { Client, TextChannel, Message, Events } from "discord.js";
-import { messages, state, voiceEvents, voiceCurrent } from "../database/schema";
+import {
+    messages,
+    state,
+    voiceEvents,
+    voiceCurrent,
+    voiceSessions,
+} from "../database/schema";
 import { eq, and, lte, desc } from "drizzle-orm";
 
 interface DBLastJoinQuery {
@@ -28,6 +34,7 @@ export default {
         try {
             await catchUp(client);
             await syncActiveVoiceStates(client);
+            setStateValue("bot_last_seen_at", new Date().toISOString());
             startCronTasks(client);
         } catch (err) {
             logger.error(
@@ -37,6 +44,16 @@ export default {
         }
     },
 };
+
+function setStateValue(key: string, value: string): void {
+    db.insert(state)
+        .values({ key, value })
+        .onConflictDoUpdate({
+            target: state.key,
+            set: { value },
+        })
+        .run();
+}
 
 async function catchUp(client: Client): Promise<void> {
     if (!config.carlLogChannelId) {
@@ -226,12 +243,54 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
         .all() as DBActiveUserQuery[];
 
     const timestamp = new Date().toISOString();
+    const lastSeenState = db
+        .select()
+        .from(state)
+        .where(eq(state.key, "bot_last_seen_at"))
+        .get();
+    const lastReliableTimestamp = lastSeenState?.value || null;
+
+    const wasSessionAlreadyClosed = (userId: string, joinedAt: string): boolean =>
+        !!db
+            .select({ id: voiceSessions.id })
+            .from(voiceSessions)
+            .where(
+                and(
+                    eq(voiceSessions.userId, userId),
+                    eq(voiceSessions.joinTime, joinedAt),
+                ),
+            )
+            .limit(1)
+            .get();
+
+    const getReliableLeaveTimestamp = (joinedAt: string): string => {
+        if (!lastReliableTimestamp) {
+            return joinedAt;
+        }
+        if (new Date(lastReliableTimestamp).getTime() <= new Date(joinedAt).getTime()) {
+            return joinedAt;
+        }
+        return lastReliableTimestamp;
+    };
 
     dbActiveUsers.forEach((dbUser) => {
+        const alreadyClosedByCatchUp = wasSessionAlreadyClosed(
+            dbUser.user_id,
+            dbUser.joined_at,
+        );
+
         if (!realActiveUsers.has(dbUser.user_id)) {
+            if (alreadyClosedByCatchUp) {
+                db.delete(voiceCurrent)
+                    .where(eq(voiceCurrent.userId, dbUser.user_id))
+                    .run();
+                return;
+            }
+
+            const leaveTimestamp = getReliableLeaveTimestamp(dbUser.joined_at);
             try {
                 const unixSec = Math.floor(
-                    new Date(timestamp).getTime() / 5000,
+                    new Date(leaveTimestamp).getTime() / 5000,
                 );
                 db.insert(voiceEvents)
                     .values({
@@ -240,7 +299,7 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
                         userId: dbUser.user_id,
                         channelName: dbUser.channel_name,
                         type: "voice_leave",
-                        timestamp,
+                        timestamp: leaveTimestamp,
                         dedupHash: `${dbUser.user_id}_voice_leave_${unixSec}`,
                         raw: JSON.stringify({ source: "sync" }),
                     })
@@ -252,7 +311,7 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
                     dbUser.username,
                     dbUser.channel_name,
                     dbUser.joined_at,
-                    timestamp,
+                    leaveTimestamp,
                 );
             } catch (err) {
                 // à ignorer
@@ -264,7 +323,90 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
     });
 
     realActiveUsers.forEach((data, userId) => {
-        if (!dbActiveUsers.some((dbU) => dbU.user_id === userId)) {
+        const dbUser = dbActiveUsers.find((dbU) => dbU.user_id === userId);
+
+        if (dbUser) {
+            const alreadyClosedByCatchUp = wasSessionAlreadyClosed(
+                dbUser.user_id,
+                dbUser.joined_at,
+            );
+
+            if (!alreadyClosedByCatchUp) {
+                const leaveTimestamp = getReliableLeaveTimestamp(dbUser.joined_at);
+                try {
+                    const unixSec = Math.floor(
+                        new Date(leaveTimestamp).getTime() / 5000,
+                    );
+                    db.insert(voiceEvents)
+                        .values({
+                            messageId: `sync_leave_${userId}`,
+                            userName: dbUser.username,
+                            userId,
+                            channelName: dbUser.channel_name,
+                            type: "voice_leave",
+                            timestamp: leaveTimestamp,
+                            dedupHash: `${userId}_voice_leave_${unixSec}`,
+                            raw: JSON.stringify({ source: "sync" }),
+                        })
+                        .run();
+
+                    recordCompletedSession(
+                        client,
+                        userId,
+                        dbUser.username,
+                        dbUser.channel_name,
+                        dbUser.joined_at,
+                        leaveTimestamp,
+                    );
+                } catch (err) {
+                    // à ignorer
+                }
+            }
+
+            try {
+                const unixSec = Math.floor(new Date(timestamp).getTime() / 5000);
+                db.insert(voiceEvents)
+                    .values({
+                        messageId: `sync_join_${userId}`,
+                        userName: data.username,
+                        userId,
+                        channelName: data.channelName,
+                        type: "voice_join",
+                        timestamp,
+                        dedupHash: `${userId}_voice_join_${unixSec}`,
+                        raw: JSON.stringify({ source: "sync" }),
+                    })
+                    .run();
+            } catch (err) {
+                // à ignorer
+            }
+
+            db.insert(voiceCurrent)
+                .values({
+                    userId,
+                    username: data.username,
+                    channelId: data.channelId,
+                    channelName: data.channelName,
+                    joinedAt: timestamp,
+                    isDeaf: data.isDeaf,
+                    deafenedAt: data.isDeaf ? timestamp : null,
+                })
+                .onConflictDoUpdate({
+                    target: voiceCurrent.userId,
+                    set: {
+                        username: data.username,
+                        channelId: data.channelId,
+                        channelName: data.channelName,
+                        joinedAt: timestamp,
+                        isDeaf: data.isDeaf,
+                        deafenedAt: data.isDeaf ? timestamp : null,
+                    },
+                })
+                .run();
+            return;
+        }
+
+        if (!dbUser) {
             try {
                 const unixSec = Math.floor(
                     new Date(timestamp).getTime() / 5000,
