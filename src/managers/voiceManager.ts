@@ -115,6 +115,23 @@ export function recordCompletedSession(
             return;
         }
 
+        const overlap = db
+            .select({ id: voiceSessions.id })
+            .from(voiceSessions)
+            .where(
+                and(
+                    eq(voiceSessions.userId, userId),
+                    sql`${voiceSessions.joinTime} < ${leaveTimeStr}`,
+                    sql`${voiceSessions.leaveTime} > ${joinTimeStr}`
+                )
+            )
+            .limit(1)
+            .get();
+
+        if (overlap) {
+            return;
+        }
+
         const deafQuery = db
             .select({
                 totalDeaf: sql<number>`SUM(${voiceDeafSessions.durationSec})`,

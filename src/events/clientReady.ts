@@ -167,6 +167,9 @@ async function catchUp(client: Client): Promise<void> {
                                             lastJoin.timestamp,
                                             timestampStr,
                                         );
+                                        db.delete(voiceCurrent)
+                                            .where(eq(voiceCurrent.userId, userId))
+                                            .run();
                                     }
                                 }
                             } catch (err) {
