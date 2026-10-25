@@ -39,7 +39,7 @@ export default {
 };
 
 async function catchUp(client: Client): Promise<void> {
-    if (!config.carlLogChannelId) {
+    if (!config.enableCarlCatchup || !config.carlLogChannelId) {
         return;
     }
     const channel = (await client.channels

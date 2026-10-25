@@ -2,9 +2,10 @@ import db from "../database/db";
 import logger from "../utils/logger";
 import config from "../config";
 import { EmbedBuilder, Client, TextChannel } from "discord.js";
-import { formatDurationDetailed } from "../utils/formatters";
+import { formatDurationDetailed, formatDurationStandard } from "../utils/formatters";
 import { voiceSessions, leaderboardSnapshots, state } from "../database/schema";
 import { sql, eq, desc } from "drizzle-orm";
+import { getYearlyLeaderboard, getYearlyServerOverview } from "../utils/timeQueries";
 
 interface DBLeaderboardRow {
     userId: string;
@@ -18,7 +19,7 @@ interface DBSnapshotRow {
 }
 
 export function startCronTasks(client: Client): void {
-    logger.info("Planificateur de tâches démarré (Bilan + Snapshots).");
+    logger.info("Planificateur de tâches démarré (Bilan + Snapshots + Gazette Annuelle).");
 
     setInterval(async () => {
         try {
@@ -40,10 +41,30 @@ export function startCronTasks(client: Client): void {
                     day: "numeric",
                 }),
             );
+            const parisMonth = parseInt(
+                now.toLocaleDateString("fr-FR", {
+                    timeZone: config.timezone,
+                    month: "numeric",
+                }),
+            );
             const parisDayOfWeek = now.toLocaleDateString("fr-FR", {
                 timeZone: config.timezone,
                 weekday: "short",
             });
+
+            if (parisMonth === 1 && parisDay === 1 && parisHour === 12) {
+                const finishedYear = now.getFullYear() - 1;
+                const annualKey = `annual_report_${finishedYear}`;
+                const alreadySent = db
+                    .select()
+                    .from(state)
+                    .where(eq(state.key, annualKey))
+                    .get();
+                if (!alreadySent) {
+                    db.insert(state).values({ key: annualKey, value: "sent" }).run();
+                    await sendAnnualReport(client, finishedYear);
+                }
+            }
 
             if (parisDay === 1 && parisHour === 12) {
                 const key = `monthly_report_${now.getFullYear()}_${now.getMonth() + 1}`;
@@ -130,6 +151,54 @@ function takeSnapshot(dateStr: string, periodType: "weekly" | "monthly"): void {
     } catch (err) {
         logger.error("Erreur lors de la capture de snapshot", err);
     }
+}
+
+async function sendAnnualReport(client: Client, year: number): Promise<void> {
+    if (!config.statsChannelId) {
+        return;
+    }
+    const channel = (await client.channels
+        .fetch(config.statsChannelId)
+        .catch(() => null)) as TextChannel | null;
+    if (!channel) {
+        return;
+    }
+
+    const leaderboard = getYearlyLeaderboard(year);
+    if (leaderboard.length === 0) {
+        return;
+    }
+
+    const overview = getYearlyServerOverview(year);
+    const top10 = leaderboard.slice(0, 10);
+
+    const embed = new EmbedBuilder()
+        .setTitle(`Grande Gazette Vocale - Bilan Annuel ${year}`)
+        .setColor("#F1C40F")
+        .setDescription(
+            `L'année **${year}** est terminée ! Voici la grande rétrospective communautaire de nos salons vocaux :`
+        )
+        .addFields([
+            {
+                name: "Statistiques Globales",
+                value:
+                    `• Volume total : **${formatDurationDetailed(overview.totalSec)}**\n` +
+                    `• Participants : \`${overview.uniqueUsers}\` membres\n` +
+                    `• Salon le plus poncé : **${overview.topChannel}**\n` +
+                    `• Journée la plus active : \`${overview.busiestDay}\``,
+                inline: false,
+            },
+        ]);
+
+    let podiumText = "";
+    top10.forEach((row, idx) => {
+        podiumText += `**#${idx + 1}** <@${row.userId}> : ${formatDurationStandard(row.totalSec)}\n`;
+    });
+
+    embed.addFields([{ name: `Top 10 de l'année ${year}`, value: podiumText }]);
+    embed.setFooter({ text: `StatsBot • Bonne année ${year + 1} !` }).setTimestamp();
+
+    await channel.send({ embeds: [embed] }).catch(() => null);
 }
 
 async function sendMonthlyReport(client: Client): Promise<void> {

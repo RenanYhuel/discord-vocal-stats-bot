@@ -4,6 +4,19 @@ import {
     generateLeaderboardEmbed,
     generateLeaderboardButtons,
 } from "../commands/top";
+import {
+    generateAnnualLeaderboardEmbed,
+    generateAnnualLeaderboardButtons,
+} from "../commands/annual";
+import {
+    generateMonthlyLeaderboardEmbed,
+    generateMonthlyLeaderboardButtons,
+} from "../commands/monthly";
+import { buildWrappedEmbed } from "../commands/wrapped";
+import {
+    getYearlyLeaderboard,
+    getMonthlyLeaderboard,
+} from "../utils/timeQueries";
 import { CommandInteraction, ButtonInteraction, Client } from "discord.js";
 import { voiceSessions } from "../database/schema";
 import { sql } from "drizzle-orm";
@@ -26,7 +39,7 @@ export default {
             if (customId.startsWith("page_")) {
                 const [_, pageStr] = customId.split("_");
                 await interaction.deferUpdate();
-                const page = parseInt(pageStr);
+                const page = parseInt(pageStr, 10);
 
                 const leaderboard = db
                     .select({
@@ -51,6 +64,93 @@ export default {
                 await interaction
                     .editReply({ embeds: [embed], components: [row] })
                     .catch(() => null);
+                return;
+            }
+
+            if (customId.startsWith("annual_page_")) {
+                const parts = customId.split("_");
+                const year = parseInt(parts[2], 10);
+                const page = parseInt(parts[3], 10);
+
+                await interaction.deferUpdate();
+                const leaderboard = getYearlyLeaderboard(year);
+                const totalPages = Math.ceil(leaderboard.length / 10);
+
+                const embed = generateAnnualLeaderboardEmbed(
+                    leaderboard,
+                    page,
+                    totalPages,
+                    year
+                );
+                const buttons = generateAnnualLeaderboardButtons(
+                    page,
+                    totalPages,
+                    year
+                );
+
+                await interaction
+                    .editReply({ embeds: [embed], components: [buttons] })
+                    .catch(() => null);
+                return;
+            }
+
+            if (customId.startsWith("monthly_page_")) {
+                const parts = customId.split("_");
+                const year = parseInt(parts[2], 10);
+                const month = parseInt(parts[3], 10);
+                const page = parseInt(parts[4], 10);
+
+                await interaction.deferUpdate();
+                const leaderboard = getMonthlyLeaderboard(year, month);
+                const totalPages = Math.ceil(leaderboard.length / 10);
+
+                const embed = generateMonthlyLeaderboardEmbed(
+                    leaderboard,
+                    page,
+                    totalPages,
+                    year,
+                    month
+                );
+                const buttons = generateMonthlyLeaderboardButtons(
+                    page,
+                    totalPages,
+                    year,
+                    month
+                );
+
+                await interaction
+                    .editReply({ embeds: [embed], components: [buttons] })
+                    .catch(() => null);
+                return;
+            }
+
+            if (customId.startsWith("share_wrapped_")) {
+                const parts = customId.split("_");
+                const targetUserId = parts[2];
+                const year = parseInt(parts[3], 10);
+
+                if (interaction.user.id !== targetUserId) {
+                    await interaction.reply({
+                        content: "Seul le propriétaire de ce Wrapped peut le partager !",
+                        ephemeral: true,
+                    });
+                    return;
+                }
+
+                await interaction.deferReply();
+                const embed = buildWrappedEmbed(
+                    interaction.user.id,
+                    interaction.user.username,
+                    interaction.user.displayAvatarURL(),
+                    year
+                );
+
+                if (!embed) {
+                    await interaction.editReply("Impossible de récupérer la rétrospective.");
+                    return;
+                }
+
+                await interaction.editReply({ embeds: [embed] });
                 return;
             }
         }

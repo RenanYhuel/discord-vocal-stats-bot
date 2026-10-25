@@ -26,6 +26,7 @@ export interface BotConfig {
     statsChannelId: string;
     adminId: string;
     timezone: string;
+    enableCarlCatchup: boolean;
 }
 
 const config: BotConfig = {
@@ -36,6 +37,7 @@ const config: BotConfig = {
     statsChannelId: process.env.STATS_ID!,
     adminId: process.env.ADMIN_ID!,
     timezone: "Europe/Paris",
+    enableCarlCatchup: process.env.ENABLE_CARL_CATCHUP === "true",
 };
 
 export default config;
