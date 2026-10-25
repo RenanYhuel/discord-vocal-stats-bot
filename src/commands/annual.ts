@@ -12,6 +12,7 @@ import {
     getYearlyServerOverview,
     DBTimeLeaderboardRow,
 } from "../utils/timeQueries";
+import { get2026LockedEmbed } from "../utils/lock2026";
 
 export function generateAnnualLeaderboardEmbed(
     leaderboard: DBTimeLeaderboardRow[],
@@ -105,6 +106,14 @@ export default {
         const subcommand = interaction.options.getSubcommand();
         const year = interaction.options.getInteger("annee", true);
 
+        if (year === 2026) {
+            const lockedEmbed = get2026LockedEmbed();
+            if (lockedEmbed) {
+                await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
+                return;
+            }
+        }
+
         if (subcommand === "leaderboard") {
             await interaction.deferReply();
 
@@ -135,7 +144,6 @@ export default {
             }
 
             const totalHours = Math.round((overview.totalSec / 3600) * 10) / 10;
-            const deafRatio = Math.round((overview.totalDeafSec / overview.totalSec) * 100);
 
             const embed = new EmbedBuilder()
                 .setTitle(`Bilan Communautaire Annuel - ${year}`)
@@ -165,11 +173,6 @@ export default {
                     {
                         name: "Journée record du serveur",
                         value: `\`${overview.busiestDay}\``,
-                        inline: true,
-                    },
-                    {
-                        name: "Actif vs Sourdine",
-                        value: `Actif : **${100 - deafRatio}%** | Sourdine : **${deafRatio}%**`,
                         inline: true,
                     },
                 ])

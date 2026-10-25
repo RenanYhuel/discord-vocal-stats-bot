@@ -10,6 +10,7 @@ import {
     getUserFavChannelForYear,
     getUserMonthlyBreakdown,
 } from "../utils/timeQueries";
+import { get2026LockedEmbed } from "../utils/lock2026";
 
 const MONTH_SHORT = [
     "Jan",
@@ -85,8 +86,16 @@ export default {
         const target = interaction.options.getUser("cible") || interaction.user;
 
         if (subcommand === "chart") {
-            await interaction.deferReply();
             const year = interaction.options.getInteger("annee", true);
+            if (year === 2026) {
+                const lockedEmbed = get2026LockedEmbed();
+                if (lockedEmbed) {
+                    await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
+                    return;
+                }
+            }
+
+            await interaction.deferReply();
             const breakdown = getUserMonthlyBreakdown(target.id, year);
             const totalSec = breakdown.reduce((acc, v) => acc + v, 0);
 
@@ -116,6 +125,12 @@ export default {
         }
 
         if (subcommand === "year") {
+            const lockedEmbed = get2026LockedEmbed();
+            if (lockedEmbed) {
+                await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
+                return;
+            }
+
             await interaction.deferReply();
 
             const s2025 = getUserStatsForYear(target.id, 2025);

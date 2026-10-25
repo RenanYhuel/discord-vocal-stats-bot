@@ -15,6 +15,7 @@ import {
     getUserBestMonthForYear,
     getUserTopPartnersForYear,
 } from "../utils/timeQueries";
+import { get2026LockedEmbed } from "../utils/lock2026";
 
 const MONTH_NAMES = [
     "Janvier",
@@ -47,18 +48,15 @@ export function buildWrappedEmbed(userId: string, username: string, avatarUrl: s
     const yearTotalHours = year % 4 === 0 ? 8784 : 8760;
     const yearPct = ((stats.totalSec / 3600 / yearTotalHours) * 100).toFixed(2);
 
-    const deafRatio = Math.round((stats.deafSec / stats.totalSec) * 100);
-    const activeRatio = 100 - deafRatio;
-
     let archetype = "Le Pilier du vocal";
-    if (deafRatio >= 50) {
-        archetype = "Le Spectre silencieux";
-    } else if (stats.totalSessions >= 200) {
+    if (stats.totalSessions >= 200) {
         archetype = "L'Habitué insatiable";
     } else if (topPartners.length > 0 && topPartners[0].overlapSec / stats.totalSec >= 0.5) {
         archetype = "Le Duo fusionnel";
     } else if (stats.maxSessionSec >= 28800) {
         archetype = "Le Marathonien de l'extrême";
+    } else if (stats.totalSessions <= 15) {
+        archetype = "L'Apparition discrète";
     }
 
     const embed = new EmbedBuilder()
@@ -84,7 +82,7 @@ export function buildWrappedEmbed(userId: string, username: string, avatarUrl: s
             },
             {
                 name: "Profil vocal",
-                value: `**${archetype}**\n*(Actif : ${activeRatio}% | Sourdine : ${deafRatio}%)*`,
+                value: `**${archetype}**`,
                 inline: true,
             },
         ]);
@@ -158,28 +156,13 @@ export default {
         await interaction.deferReply({ ephemeral: true });
 
         const target = interaction.options.getUser("cible") || interaction.user;
-        const now = new Date();
 
         const requestedYear = interaction.options.getInteger("annee") || 2026;
 
         if (requestedYear === 2026) {
-            const unlockDate = new Date("2026-12-01T00:00:00Z");
-            if (now.getTime() < unlockDate.getTime()) {
-                const diffMs = unlockDate.getTime() - now.getTime();
-                const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-                const teaserEmbed = new EmbedBuilder()
-                    .setTitle("Rétrospective Vocale 2026 - Bientôt disponible")
-                    .setColor("#E67E22")
-                    .setDescription(
-                        `L'année 2026 n'est pas encore terminée !\n\n` +
-                        `Le grand **Wrapped 2026** sera déverrouillé le **1er décembre 2026** (dans environ **${daysRemaining} jours**).\n\n` +
-                        `En attendant, tu peux dès maintenant découvrir ta rétrospective **2025** en sélectionnant l'option \`annee: 2025\` !`
-                    )
-                    .setFooter({ text: "StatsBot • Patience..." })
-                    .setTimestamp();
-
-                await interaction.editReply({ embeds: [teaserEmbed] });
+            const lockedEmbed = get2026LockedEmbed();
+            if (lockedEmbed) {
+                await interaction.editReply({ embeds: [lockedEmbed] });
                 return;
             }
         }
