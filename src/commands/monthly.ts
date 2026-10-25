@@ -182,7 +182,7 @@ export default {
         }
 
         if (subcommand === "leaderboard") {
-            await interaction.deferReply();
+            await interaction.deferReply({ ephemeral: true });
 
             const leaderboard = getMonthlyLeaderboard(year, month);
             if (leaderboard.length === 0) {

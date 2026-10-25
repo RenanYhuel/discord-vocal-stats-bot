@@ -115,7 +115,7 @@ export default {
         }
 
         if (subcommand === "leaderboard") {
-            await interaction.deferReply();
+            await interaction.deferReply({ ephemeral: true });
 
             const leaderboard = getYearlyLeaderboard(year);
             if (leaderboard.length === 0) {
