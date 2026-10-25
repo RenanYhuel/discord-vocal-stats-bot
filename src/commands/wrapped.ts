@@ -2,9 +2,6 @@ import {
     SlashCommandBuilder,
     EmbedBuilder,
     ChatInputCommandInteraction,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
 } from "discord.js";
 import { formatDurationDetailed, formatDurationStandard } from "../utils/formatters";
 import {
@@ -153,19 +150,19 @@ export default {
                 .setDescription("Le membre dont tu souhaites consulter le Wrapped (optionnel)")
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
-
-        const target = interaction.options.getUser("cible") || interaction.user;
-
         const requestedYear = interaction.options.getInteger("annee") || 2026;
 
         if (requestedYear === 2026) {
             const lockedEmbed = get2026LockedEmbed();
             if (lockedEmbed) {
-                await interaction.editReply({ embeds: [lockedEmbed] });
+                await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
                 return;
             }
         }
+
+        await interaction.deferReply();
+
+        const target = interaction.options.getUser("cible") || interaction.user;
 
         const embed = buildWrappedEmbed(
             target.id,
@@ -181,16 +178,6 @@ export default {
             return;
         }
 
-        const shareButton = new ButtonBuilder()
-            .setCustomId(`share_wrapped_${target.id}_${requestedYear}`)
-            .setLabel("Partager publiquement")
-            .setStyle(ButtonStyle.Success);
-
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(shareButton);
-
-        await interaction.editReply({
-            embeds: [embed],
-            components: interaction.user.id === target.id ? [row] : [],
-        });
+        await interaction.editReply({ embeds: [embed] });
     },
 };

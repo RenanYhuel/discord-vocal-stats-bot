@@ -215,7 +215,7 @@ export default {
         }
 
         if (subcommand === "me") {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply();
 
             const target = interaction.options.getUser("cible") || interaction.user;
             const yearMonthStr = `${year}-${String(month).padStart(2, "0")}`;
