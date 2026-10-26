@@ -6,17 +6,24 @@ import {
     ButtonBuilder,
     ButtonStyle,
 } from "discord.js";
-import { getUserStreak, getDuoStreak, getStreakLeaderboard, StreakLeaderboardRow } from "../utils/streakQueries";
+import {
+    getUserStreak,
+    getDuoStreak,
+    getStreakLeaderboard,
+    getBestStreakLeaderboard,
+    StreakLeaderboardRow,
+} from "../utils/streakQueries";
 
 export function generateStreakLeaderboardEmbed(
     leaderboard: StreakLeaderboardRow[],
     page: number,
-    totalPages: number
+    totalPages: number,
+    isRecord = false
 ): EmbedBuilder {
     const embed = new EmbedBuilder()
-        .setTitle("Classement des Flammes Vocales Actives")
-        .setColor("#FF5722")
-        .setFooter({ text: `Page ${page} / ${totalPages} • Séries de jours consécutifs` })
+        .setTitle(isRecord ? "Classement des Records Historiques de Flammes" : "Classement des Flammes Vocales Actives")
+        .setColor(isRecord ? "#F1C40F" : "#FF5722")
+        .setFooter({ text: `Page ${page} / ${totalPages} • ${isRecord ? "Records absolus" : "Séries de jours consécutifs en cours"}` })
         .setTimestamp();
 
     const startIdx = (page - 1) * 10;
@@ -25,13 +32,13 @@ export function generateStreakLeaderboardEmbed(
 
     pageData.forEach((row, idx) => {
         const position = startIdx + idx + 1;
-        listText += `**#${position}** <@${row.userId}> : 🔥 **${row.streak} jour${row.streak > 1 ? "s" : ""}**\n`;
+        listText += `**#${position}** <@${row.userId}> : ${isRecord ? "🏆" : "🔥"} **${row.streak} jour${row.streak > 1 ? "s" : ""}**\n`;
     });
 
     embed.addFields([
         {
-            name: "Membres avec flammes actives",
-            value: listText || "Aucune flamme active actuellement.",
+            name: isRecord ? "Records de flammes" : "Membres avec flammes actives",
+            value: listText || "Aucune donnée.",
         },
     ]);
     return embed;
@@ -39,16 +46,18 @@ export function generateStreakLeaderboardEmbed(
 
 export function generateStreakLeaderboardButtons(
     page: number,
-    totalPages: number
+    totalPages: number,
+    isRecord = false
 ): ActionRowBuilder<ButtonBuilder> {
+    const prefix = isRecord ? "streak_record_page_" : "streak_page_";
     const prevButton = new ButtonBuilder()
-        .setCustomId(`streak_page_${page - 1}`)
+        .setCustomId(`${prefix}${page - 1}`)
         .setLabel("Précédent")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(page === 1);
 
     const nextButton = new ButtonBuilder()
-        .setCustomId(`streak_page_${page + 1}`)
+        .setCustomId(`${prefix}${page + 1}`)
         .setLabel("Suivant")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(page === totalPages);
@@ -73,18 +82,28 @@ export default {
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("duo")
-                .setDescription("Consulte les flammes partagées avec un membre en particulier")
+                .setDescription("Consulte les flammes partagées entre deux membres")
                 .addUserOption((option) =>
                     option
-                        .setName("membre")
-                        .setDescription("Le membre partenaire")
+                        .setName("membre1")
+                        .setDescription("Premier membre")
                         .setRequired(true)
+                )
+                .addUserOption((option) =>
+                    option
+                        .setName("membre2")
+                        .setDescription("Second membre (laisser vide pour comparer avec toi-même)")
                 )
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("leaderboard")
                 .setDescription("Classement des plus longues flammes actives du serveur")
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("records")
+                .setDescription("Classement des plus grands records de flammes historiques du serveur")
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const subcommand = interaction.options.getSubcommand();
@@ -99,8 +118,28 @@ export default {
             }
 
             const totalPages = Math.ceil(leaderboard.length / 10);
-            const embed = generateStreakLeaderboardEmbed(leaderboard, 1, totalPages);
-            const buttons = generateStreakLeaderboardButtons(1, totalPages);
+            const embed = generateStreakLeaderboardEmbed(leaderboard, 1, totalPages, false);
+            const buttons = generateStreakLeaderboardButtons(1, totalPages, false);
+
+            await interaction.editReply({
+                embeds: [embed],
+                components: totalPages > 1 ? [buttons] : [],
+            });
+            return;
+        }
+
+        if (subcommand === "records") {
+            await interaction.deferReply({ ephemeral: true });
+
+            const leaderboard = getBestStreakLeaderboard();
+            if (leaderboard.length === 0) {
+                await interaction.editReply("Aucun record de flammes enregistré.");
+                return;
+            }
+
+            const totalPages = Math.ceil(leaderboard.length / 10);
+            const embed = generateStreakLeaderboardEmbed(leaderboard, 1, totalPages, true);
+            const buttons = generateStreakLeaderboardButtons(1, totalPages, true);
 
             await interaction.editReply({
                 embeds: [embed],
@@ -150,19 +189,20 @@ export default {
 
         if (subcommand === "duo") {
             await interaction.deferReply();
-            const target = interaction.options.getUser("membre", true);
+            const user1 = interaction.options.getUser("membre1", true);
+            const user2 = interaction.options.getUser("membre2") || interaction.user;
 
-            if (target.id === interaction.user.id) {
-                await interaction.editReply("Tu ne peux pas calculer une flamme de duo avec toi-même !");
+            if (user1.id === user2.id) {
+                await interaction.editReply("Tu ne peux pas calculer une flamme de duo avec la même personne !");
                 return;
             }
 
-            const duoData = getDuoStreak(interaction.user.id, target.id);
+            const duoData = getDuoStreak(user1.id, user2.id);
 
             const embed = new EmbedBuilder()
-                .setTitle(`Flammes de Duo : ${interaction.user.username} & ${target.username}`)
+                .setTitle(`Flammes de Duo : ${user1.username} & ${user2.username}`)
                 .setColor("#FF9800")
-                .setDescription(`Série de jours consécutifs passés ensemble en vocal par <@${interaction.user.id}> et <@${target.id}> :`)
+                .setDescription(`Série de jours consécutifs passés ensemble en vocal par <@${user1.id}> et <@${user2.id}> :`)
                 .addFields([
                     {
                         name: "Flamme commune active",
@@ -184,3 +224,4 @@ export default {
         }
     },
 };
+

@@ -21,7 +21,10 @@ import {
     getYearlyLeaderboard,
     getMonthlyLeaderboard,
 } from "../utils/timeQueries";
-import { getStreakLeaderboard } from "../utils/streakQueries";
+import {
+    getStreakLeaderboard,
+    getBestStreakLeaderboard,
+} from "../utils/streakQueries";
 import { CommandInteraction, ButtonInteraction, Client } from "discord.js";
 import { voiceSessions } from "../database/schema";
 import { sql } from "drizzle-orm";
@@ -137,8 +140,25 @@ export default {
                 const leaderboard = getStreakLeaderboard();
                 const totalPages = Math.ceil(leaderboard.length / 10);
 
-                const embed = generateStreakLeaderboardEmbed(leaderboard, page, totalPages);
-                const buttons = generateStreakLeaderboardButtons(page, totalPages);
+                const embed = generateStreakLeaderboardEmbed(leaderboard, page, totalPages, false);
+                const buttons = generateStreakLeaderboardButtons(page, totalPages, false);
+
+                await interaction
+                    .editReply({ embeds: [embed], components: [buttons] })
+                    .catch(() => null);
+                return;
+            }
+
+            if (customId.startsWith("streak_record_page_")) {
+                const parts = customId.split("_");
+                const page = parseInt(parts[3], 10);
+
+                await interaction.deferUpdate();
+                const leaderboard = getBestStreakLeaderboard();
+                const totalPages = Math.ceil(leaderboard.length / 10);
+
+                const embed = generateStreakLeaderboardEmbed(leaderboard, page, totalPages, true);
+                const buttons = generateStreakLeaderboardButtons(page, totalPages, true);
 
                 await interaction
                     .editReply({ embeds: [embed], components: [buttons] })

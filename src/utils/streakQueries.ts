@@ -212,3 +212,30 @@ export function getStreakLeaderboard(): StreakLeaderboardRow[] {
 
     return list.sort((a, b) => b.streak - a.streak);
 }
+
+export function getBestStreakLeaderboard(): StreakLeaderboardRow[] {
+    const allUsers = db
+        .select({
+            userId: voiceSessions.userId,
+            userName: voiceSessions.userName,
+        })
+        .from(voiceSessions)
+        .groupBy(voiceSessions.userId)
+        .all() as { userId: string; userName: string }[];
+
+    const list: StreakLeaderboardRow[] = [];
+
+    for (const u of allUsers) {
+        const streakData = getUserStreak(u.userId);
+        if (streakData.bestStreak > 0) {
+            list.push({
+                userId: u.userId,
+                userName: u.userName,
+                streak: streakData.bestStreak,
+            });
+        }
+    }
+
+    return list.sort((a, b) => b.streak - a.streak);
+}
+
