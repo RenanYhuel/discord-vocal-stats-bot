@@ -15,6 +15,8 @@ import {
 import {
     generateStreakLeaderboardEmbed,
     generateStreakLeaderboardButtons,
+    generateDuoStreakLeaderboardEmbed,
+    generateDuoStreakLeaderboardButtons,
 } from "../commands/streak";
 import { buildWrappedEmbed } from "../commands/wrapped";
 import {
@@ -24,6 +26,7 @@ import {
 import {
     getStreakLeaderboard,
     getBestStreakLeaderboard,
+    getBestDuoStreakLeaderboard,
 } from "../utils/streakQueries";
 import { CommandInteraction, ButtonInteraction, Client } from "discord.js";
 import { voiceSessions } from "../database/schema";
@@ -159,6 +162,23 @@ export default {
 
                 const embed = generateStreakLeaderboardEmbed(leaderboard, page, totalPages, true);
                 const buttons = generateStreakLeaderboardButtons(page, totalPages, true);
+
+                await interaction
+                    .editReply({ embeds: [embed], components: [buttons] })
+                    .catch(() => null);
+                return;
+            }
+
+            if (customId.startsWith("streak_duo_record_page_")) {
+                const parts = customId.split("_");
+                const page = parseInt(parts[4], 10);
+
+                await interaction.deferUpdate();
+                const leaderboard = getBestDuoStreakLeaderboard();
+                const totalPages = Math.ceil(leaderboard.length / 10);
+
+                const embed = generateDuoStreakLeaderboardEmbed(leaderboard, page, totalPages);
+                const buttons = generateDuoStreakLeaderboardButtons(page, totalPages);
 
                 await interaction
                     .editReply({ embeds: [embed], components: [buttons] })

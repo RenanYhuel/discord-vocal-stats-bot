@@ -19,6 +19,14 @@ export interface StreakLeaderboardRow {
     streak: number;
 }
 
+export interface DuoStreakLeaderboardRow {
+    user1Id: string;
+    user1Name: string;
+    user2Id: string;
+    user2Name: string;
+    streak: number;
+}
+
 function getParisDateString(d: Date): string {
     return d.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
 }
@@ -237,5 +245,37 @@ export function getBestStreakLeaderboard(): StreakLeaderboardRow[] {
     }
 
     return list.sort((a, b) => b.streak - a.streak);
+}
+
+export function getBestDuoStreakLeaderboard(): DuoStreakLeaderboardRow[] {
+    const allUsers = db
+        .select({
+            userId: voiceSessions.userId,
+            userName: voiceSessions.userName,
+        })
+        .from(voiceSessions)
+        .groupBy(voiceSessions.userId)
+        .all() as { userId: string; userName: string }[];
+
+    const duoList: DuoStreakLeaderboardRow[] = [];
+
+    for (let i = 0; i < allUsers.length; i++) {
+        for (let j = i + 1; j < allUsers.length; j++) {
+            const u1 = allUsers[i];
+            const u2 = allUsers[j];
+            const duoData = getDuoStreak(u1.userId, u2.userId);
+            if (duoData.bestStreak > 0) {
+                duoList.push({
+                    user1Id: u1.userId,
+                    user1Name: u1.userName,
+                    user2Id: u2.userId,
+                    user2Name: u2.userName,
+                    streak: duoData.bestStreak,
+                });
+            }
+        }
+    }
+
+    return duoList.sort((a, b) => b.streak - a.streak);
 }
 

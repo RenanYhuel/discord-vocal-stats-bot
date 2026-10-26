@@ -11,7 +11,9 @@ import {
     getDuoStreak,
     getStreakLeaderboard,
     getBestStreakLeaderboard,
+    getBestDuoStreakLeaderboard,
     StreakLeaderboardRow,
+    DuoStreakLeaderboardRow,
 } from "../utils/streakQueries";
 
 export function generateStreakLeaderboardEmbed(
@@ -42,6 +44,54 @@ export function generateStreakLeaderboardEmbed(
         },
     ]);
     return embed;
+}
+
+export function generateDuoStreakLeaderboardEmbed(
+    leaderboard: DuoStreakLeaderboardRow[],
+    page: number,
+    totalPages: number
+): EmbedBuilder {
+    const embed = new EmbedBuilder()
+        .setTitle("Classement des Records de Flammes en Duo")
+        .setColor("#F1C40F")
+        .setFooter({ text: `Page ${page} / ${totalPages} • Records de séries communes` })
+        .setTimestamp();
+
+    const startIdx = (page - 1) * 10;
+    const pageData = leaderboard.slice(startIdx, startIdx + 10);
+    let listText = "";
+
+    pageData.forEach((row, idx) => {
+        const position = startIdx + idx + 1;
+        listText += `**#${position}** <@${row.user1Id}> & <@${row.user2Id}> : 🏆 **${row.streak} jour${row.streak > 1 ? "s" : ""}**\n`;
+    });
+
+    embed.addFields([
+        {
+            name: "Duos avec les plus grands records",
+            value: listText || "Aucun record de duo enregistré.",
+        },
+    ]);
+    return embed;
+}
+
+export function generateDuoStreakLeaderboardButtons(
+    page: number,
+    totalPages: number
+): ActionRowBuilder<ButtonBuilder> {
+    const prevButton = new ButtonBuilder()
+        .setCustomId(`streak_duo_record_page_${page - 1}`)
+        .setLabel("Précédent")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page === 1);
+
+    const nextButton = new ButtonBuilder()
+        .setCustomId(`streak_duo_record_page_${page + 1}`)
+        .setLabel("Suivant")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page === totalPages);
+
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(prevButton, nextButton);
 }
 
 export function generateStreakLeaderboardButtons(
@@ -104,6 +154,15 @@ export default {
             subcommand
                 .setName("records")
                 .setDescription("Classement des plus grands records de flammes historiques du serveur")
+                .addStringOption((option) =>
+                    option
+                        .setName("type")
+                        .setDescription("Type de classement (solo ou duo)")
+                        .addChoices(
+                            { name: "Solo (Records personnels)", value: "solo" },
+                            { name: "Duo (Records de duos)", value: "duo" }
+                        )
+                )
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
         const subcommand = interaction.options.getSubcommand();
@@ -130,6 +189,25 @@ export default {
 
         if (subcommand === "records") {
             await interaction.deferReply({ ephemeral: true });
+            const type = interaction.options.getString("type") || "solo";
+
+            if (type === "duo") {
+                const duoLeaderboard = getBestDuoStreakLeaderboard();
+                if (duoLeaderboard.length === 0) {
+                    await interaction.editReply("Aucun record de flammes en duo enregistré.");
+                    return;
+                }
+
+                const totalPages = Math.ceil(duoLeaderboard.length / 10);
+                const embed = generateDuoStreakLeaderboardEmbed(duoLeaderboard, 1, totalPages);
+                const buttons = generateDuoStreakLeaderboardButtons(1, totalPages);
+
+                await interaction.editReply({
+                    embeds: [embed],
+                    components: totalPages > 1 ? [buttons] : [],
+                });
+                return;
+            }
 
             const leaderboard = getBestStreakLeaderboard();
             if (leaderboard.length === 0) {
