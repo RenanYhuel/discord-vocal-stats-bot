@@ -73,19 +73,23 @@ export function calculateDuoCompatibility(userId1: string, userId2: string): Duo
         }
     }
 
-    const minTotal = Math.min(totalSec1, totalSec2);
     let overlapScore = 0;
-    if (minTotal > 0) {
-        overlapScore = Math.min(60, Math.round((sharedSeconds / minTotal) * 60));
+    if (totalSec1 > 0 && totalSec2 > 0 && sharedSeconds > 0) {
+        const ratio1 = sharedSeconds / totalSec1;
+        const ratio2 = sharedSeconds / totalSec2;
+        const mutualRatio = (2 * ratio1 * ratio2) / (ratio1 + ratio2);
+        const volumeHours = sharedSeconds / 3600;
+        const volumeBonus = Math.min(25, Math.log10(volumeHours + 1) * 15);
+        overlapScore = Math.min(70, Math.round(mutualRatio * 45 + volumeBonus));
     }
 
     const chans1 = new Set(s1.map((r) => r.channelName));
     const chans2 = new Set(s2.map((r) => r.channelName));
     const commonChansCount = Array.from(chans1).filter((c) => chans2.has(c)).length;
     const allChansCount = new Set([...chans1, ...chans2]).size;
-    const channelScore = allChansCount > 0 ? Math.round((commonChansCount / allChansCount) * 20) : 0;
+    const channelScore = allChansCount > 0 ? Math.round((commonChansCount / allChansCount) * 15) : 0;
 
-    const basePresenceScore = (totalSec1 > 0 && totalSec2 > 0) ? 20 : 0;
+    const basePresenceScore = (sharedSeconds >= 1800) ? 15 : (sharedSeconds > 0 ? 5 : 0);
     const score = Math.max(1, Math.min(100, overlapScore + channelScore + basePresenceScore));
 
     let title = "Inconnus de couloir";
@@ -148,16 +152,40 @@ export function findBestDuoMatch(userId: string): DuoMatchResult | null {
     }
 
     let bestMatch: DuoMatchResult | null = null;
+    let bestWeight = -1;
 
     for (const cand of candidateUsers) {
         const result = calculateDuoCompatibility(userId, cand.userId);
-        if (!bestMatch || result.score > bestMatch.score || (result.score === bestMatch.score && result.sharedSeconds > bestMatch.sharedSeconds)) {
+        if (result.sharedSeconds < 600) {
+            continue;
+        }
+
+        const weight = result.score * Math.sqrt(result.sharedSeconds);
+
+        if (weight > bestWeight) {
+            bestWeight = weight;
             bestMatch = {
                 targetUserId: cand.userId,
                 targetUserName: cand.userName,
                 score: result.score,
                 sharedSeconds: result.sharedSeconds,
             };
+        }
+    }
+
+    if (!bestMatch) {
+        let maxSec = -1;
+        for (const cand of candidateUsers) {
+            const result = calculateDuoCompatibility(userId, cand.userId);
+            if (result.sharedSeconds > maxSec && result.sharedSeconds > 0) {
+                maxSec = result.sharedSeconds;
+                bestMatch = {
+                    targetUserId: cand.userId,
+                    targetUserName: cand.userName,
+                    score: result.score,
+                    sharedSeconds: result.sharedSeconds,
+                };
+            }
         }
     }
 
