@@ -11,7 +11,6 @@ import {
     getMonthlyLeaderboard,
     DBTimeLeaderboardRow,
 } from "../utils/timeQueries";
-import { get2026LockedEmbed } from "../utils/lock2026";
 import db from "../database/db";
 import { voiceSessions } from "../database/schema";
 import { sql, eq, and } from "drizzle-orm";
@@ -172,14 +171,6 @@ export default {
         const month = interaction.options.getInteger("mois", true);
         const year = interaction.options.getInteger("annee", true);
         const monthName = MONTH_NAMES[month - 1] || `Mois ${month}`;
-
-        if (year === 2026) {
-            const lockedEmbed = get2026LockedEmbed();
-            if (lockedEmbed) {
-                await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
-                return;
-            }
-        }
 
         if (subcommand === "leaderboard") {
             await interaction.deferReply({ ephemeral: true });
