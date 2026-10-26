@@ -12,11 +12,16 @@ import {
     generateMonthlyLeaderboardEmbed,
     generateMonthlyLeaderboardButtons,
 } from "../commands/monthly";
+import {
+    generateStreakLeaderboardEmbed,
+    generateStreakLeaderboardButtons,
+} from "../commands/streak";
 import { buildWrappedEmbed } from "../commands/wrapped";
 import {
     getYearlyLeaderboard,
     getMonthlyLeaderboard,
 } from "../utils/timeQueries";
+import { getStreakLeaderboard } from "../utils/streakQueries";
 import { CommandInteraction, ButtonInteraction, Client } from "discord.js";
 import { voiceSessions } from "../database/schema";
 import { sql } from "drizzle-orm";
@@ -117,6 +122,23 @@ export default {
                     year,
                     month
                 );
+
+                await interaction
+                    .editReply({ embeds: [embed], components: [buttons] })
+                    .catch(() => null);
+                return;
+            }
+
+            if (customId.startsWith("streak_page_")) {
+                const parts = customId.split("_");
+                const page = parseInt(parts[2], 10);
+
+                await interaction.deferUpdate();
+                const leaderboard = getStreakLeaderboard();
+                const totalPages = Math.ceil(leaderboard.length / 10);
+
+                const embed = generateStreakLeaderboardEmbed(leaderboard, page, totalPages);
+                const buttons = generateStreakLeaderboardButtons(page, totalPages);
 
                 await interaction
                     .editReply({ embeds: [embed], components: [buttons] })

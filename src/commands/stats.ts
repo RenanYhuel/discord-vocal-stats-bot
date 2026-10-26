@@ -12,6 +12,7 @@ import {
 import { voiceSessions, leaderboardSnapshots, userAchievements } from "../database/schema";
 import { sql, eq, and, desc } from "drizzle-orm";
 import { ACHIEVEMENTS } from "../utils/achievementsList";
+import { getUserStreak } from "../utils/streakQueries";
 
 interface DBStatsQuery {
     totalSec: number | null;
@@ -169,10 +170,14 @@ export default {
                 : formatDurationStandard(statsQuery.maxSessionSec);
 
         const weeklyChart = generateWeeklyTextChart(target.id);
+        const streakData = getUserStreak(target.id);
+        const streakText = streakData.currentStreak > 0
+            ? `🔥 \`${streakData.currentStreak} jour${streakData.currentStreak > 1 ? "s" : ""}\` (Record : \`${streakData.bestStreak}j\`)`
+            : `❄️ Aucune (Record : \`${streakData.bestStreak}j\`)`;
 
         const embed = new EmbedBuilder()
             .setTitle(`Statistiques de ${target.username} (Rang #${rank})`)
-            .setDescription(`Tendance : ${trendText}\nProgression Succès : \`${achievementsCount} / ${ACHIEVEMENTS.length}\` (${achievementsPercentage}%)`)
+            .setDescription(`Tendance : ${trendText}\nProgression Succès : \`${achievementsCount} / ${ACHIEVEMENTS.length}\` (${achievementsPercentage}%)\nSérie Vocale : ${streakText}`)
             .setThumbnail(target.displayAvatarURL())
             .setColor("#2F3136")
             .addFields([
