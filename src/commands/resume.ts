@@ -25,7 +25,7 @@ export default {
             option
                 .setName("messages")
                 .setDescription(
-                    "Nombre de messages récents à analyser (10 à 500)",
+                    "Nombre de messages récents à analyser (ex : 50, 100, max 500)",
                 )
                 .setMinValue(10)
                 .setMaxValue(500),
@@ -34,7 +34,7 @@ export default {
             option
                 .setName("depuis_heures")
                 .setDescription(
-                    "Analyser les messages des X dernières heures (ex: 2 ou 0.5)",
+                    "Période en heures (ex : 1 pour 1h, 2 pour 2h, 0.5 pour 30min)",
                 )
                 .setMinValue(0.1)
                 .setMaxValue(720),
@@ -43,33 +43,35 @@ export default {
             option
                 .setName("depuis_date")
                 .setDescription(
-                    "Heure ou date de départ (ex: 14:30, hier 20:00, 30/10/2026)",
+                    "Heure ou date de départ (ex : 14:30, hier 20:00, 30/10/2026)",
                 ),
         )
         .addStringOption((option) =>
             option
                 .setName("depuis_message")
-                .setDescription("ID ou lien du message Discord de départ"),
+                .setDescription(
+                    "Lien d'un message précis (Clic droit -> Copier le lien)",
+                ),
         )
         .addUserOption((option) =>
             option
                 .setName("membre")
                 .setDescription(
-                    "Filtrer uniquement sur les messages d'un membre",
+                    "Résumer uniquement les messages envoyés par ce membre",
                 ),
         )
         .addStringOption((option) =>
             option
                 .setName("sujet")
                 .setDescription(
-                    "Focaliser le résumé sur un sujet ou mot-clé précis",
+                    "Thème ou mot-clé à résumer en priorité (ex : projet, cours, minecraft)",
                 ),
         )
         .addStringOption((option) =>
             option
                 .setName("style")
                 .setDescription(
-                    "Style rédactionnel du résumé (défaut : Synthèse)",
+                    "Format et ton de rédaction du résumé (défaut : Synthèse)",
                 )
                 .addChoices(
                     {
@@ -99,11 +101,13 @@ export default {
                     },
                 ),
         )
-        .addBooleanOption((option) =>
+        .addStringOption((option) =>
             option
                 .setName("inclure_bots")
-                .setDescription(
-                    "Inclure les messages envoyés par les bots (faux par défaut)",
+                .setDescription("Prendre en compte les messages des bots")
+                .addChoices(
+                    { name: "Non (ignorer les bots)", value: "non" },
+                    { name: "Oui (inclure les bots)", value: "oui" },
                 ),
         ),
 
@@ -165,7 +169,7 @@ export default {
             (interaction.options.getString("style") as ResumeStyle) ||
             "synthese";
         const includeBots =
-            interaction.options.getBoolean("inclure_bots") ?? false;
+            interaction.options.getString("inclure_bots") === "oui";
 
         let parsedDate: Date | undefined = undefined;
         if (depuisDateRaw) {
