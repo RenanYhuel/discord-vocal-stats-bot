@@ -16,10 +16,18 @@ LOG_CHANNEL_ID=id_salon_logs_carlbot
 STATS_ID=id_salon_annonces_stats
 ADMIN_ID=ton_id_discord_admin
 ENABLE_CARL_CATCHUP=false
+GEMINI_API_KEY=cle_api_google_ai_studio
+GEMINI_MODEL=gemini-2.5-flash
+AI_VIP_ROLE_ID=id_role_illimite
+AI_DAILY_QUOTA=5
 ```
 
 - **LOG_CHANNEL_ID** : Salon recevant les logs de connexions et deconnexions vocales de Carl-bot.
 - **ENABLE_CARL_CATCHUP** : Variable optionnelle (`false` par defaut). Lorsqu'elle est activee (`true`), le bot lit ce salon au demarrage pour rattraper les evenements qui auraient pu avoir lieu pendant une coupure.
+- **GEMINI_API_KEY** : Cle d'API Google AI Studio pour la generation des resumes par intelligence artificielle.
+- **GEMINI_MODEL** : Modele Gemini utilise (`gemini-2.5-flash` par defaut).
+- **AI_VIP_ROLE_ID** : Identifiant de role Discord accordant un acces illimite aux resumes IA.
+- **AI_DAILY_QUOTA** : Nombre de resumes IA autorises par jour pour les membres standards (valeur par defaut : 5).
 
 ---
 
@@ -58,6 +66,14 @@ ENABLE_CARL_CATCHUP=false
 - **/streak duo `<membre1>` `[membre2]`** : Serie de jours consecutifs partages en vocal entre deux membres.
 - **/streak leaderboard** : Classement des plus longues series de flammes actives du serveur.
 - **/streak records `[type]`** : Classement des records historiques de flammes, avec choix entre les records personnels (`Solo`) et les records de duos (`Duo`).
+
+### Intelligence Artificielle (Resume de Discussions)
+
+- **/resume `[messages]` `[depuis_heures]` `[depuis_date]` `[depuis_message]` `[membre]` `[sujet]` `[style]` `[inclure_bots]`** : Resume et analyse les echanges d'un salon textuel via Google Gemini.
+    - **Filtres temporels et de volume** : Nombre de messages (10 a 500), heures ecoulees, date ou heure specifique (ex: `14:30`, `hier 20:00`, `30/10/2026`), ou message de reference (ID ou lien Discord).
+    - **Filtres de contenu** : Filtrage par membre cible, focalisation sur un sujet ou mot-cle, exclusion ou inclusion des bots.
+    - **Styles redacteurs** : Synthese equilibree, TL;DR express, Drama & Potins, Roast sarcastique, Analyse de debat, Chronologie, Proces-verbal officiel.
+    - **Quotas** : Quota quotidien configurable (`AI_DAILY_QUOTA`), avec acces illimite pour l'administrateur et le role VIP (`AI_VIP_ROLE_ID`).
 
 ---
 

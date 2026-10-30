@@ -85,3 +85,10 @@ export const userAchievements = sqliteTable("user_achievements", {
     achievementId: text("achievement_id").notNull(),
     unlockedAt: text("unlocked_at").notNull(),
 });
+
+export const aiQuotas = sqliteTable("ai_quotas", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("user_id").notNull(),
+    dateStr: text("date_str").notNull(),
+    usedCount: integer("used_count").notNull().default(0),
+});

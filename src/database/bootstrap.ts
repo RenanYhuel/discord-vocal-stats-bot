@@ -111,6 +111,16 @@ export function initSchema(): void {
     CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id);
   `);
 
+    sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS ai_quotas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      date_str TEXT NOT NULL,
+      used_count INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_quotas_user_date ON ai_quotas(user_id, date_str);
+  `);
+
     try {
         const sessionsInfo = sqlite
             .prepare("PRAGMA table_info(voice_sessions)")

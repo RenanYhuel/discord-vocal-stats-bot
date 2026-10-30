@@ -13,7 +13,7 @@ const requiredEnv = [
 for (const envVar of requiredEnv) {
     if (!process.env[envVar]) {
         throw new Error(
-            `Erreur de configuration : la variable d'environnement ${envVar} est manquante.`
+            `Erreur de configuration : la variable d'environnement ${envVar} est manquante.`,
         );
     }
 }
@@ -27,6 +27,10 @@ export interface BotConfig {
     adminId: string;
     timezone: string;
     enableCarlCatchup: boolean;
+    geminiApiKey: string | null;
+    geminiModel: string;
+    aiVipRoleId: string | null;
+    aiDailyQuota: number;
 }
 
 const config: BotConfig = {
@@ -38,6 +42,10 @@ const config: BotConfig = {
     adminId: process.env.ADMIN_ID!,
     timezone: "Europe/Paris",
     enableCarlCatchup: process.env.ENABLE_CARL_CATCHUP === "true",
+    geminiApiKey: process.env.GEMINI_API_KEY || null,
+    geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    aiVipRoleId: process.env.AI_VIP_ROLE_ID || null,
+    aiDailyQuota: parseInt(process.env.AI_DAILY_QUOTA || "5", 10),
 };
 
 export default config;
