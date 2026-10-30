@@ -69,7 +69,7 @@ AI_DAILY_QUOTA=5
 
 ### Intelligence Artificielle (Resume de Discussions)
 
-- **/resume `[messages]` `[depuis_heures]` `[depuis_date]` `[depuis_message]` `[membre]` `[sujet]` `[style]` `[inclure_bots]`** : Resume et analyse les echanges d'un salon textuel via Google Gemini.
+- **/resume `[salon]` `[messages]` `[depuis_heures]` `[depuis_date]` `[depuis_message]` `[membre]` `[sujet]` `[style]` `[inclure_bots]`** : Resume et analyse les echanges d'un salon textuel via Google Gemini.
     - **Filtres temporels et de volume** : Nombre de messages (10 a 500), heures ecoulees, date ou heure specifique (ex: `14:30`, `hier 20:00`, `30/10/2026`), ou message de reference (ID ou lien Discord).
     - **Filtres de contenu** : Filtrage par membre cible, focalisation sur un sujet ou mot-cle, exclusion ou inclusion des bots.
     - **Styles redacteurs** : Synthese equilibree, TL;DR express, Drama & Potins, Roast sarcastique, Analyse de debat, Chronologie, Proces-verbal officiel.

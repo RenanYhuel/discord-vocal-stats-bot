@@ -3,6 +3,9 @@ import {
     EmbedBuilder,
     ChatInputCommandInteraction,
     GuildMember,
+    ChannelType,
+    PermissionFlagsBits,
+    TextBasedChannel,
 } from "discord.js";
 import config from "../config";
 import logger from "../utils/logger";
@@ -15,11 +18,36 @@ import {
     RESUME_STYLE_NAMES,
 } from "../services/geminiService";
 
+const ALLOWED_CATEGORY_IDS = ["1361248660154748958", "1361248850173493288"];
+
+function getChannelCategoryId(channel: TextBasedChannel): string | null {
+    if ("isThread" in channel && channel.isThread() && channel.parent) {
+        return channel.parent.parentId || null;
+    }
+    if ("parentId" in channel && channel.parentId) {
+        return channel.parentId;
+    }
+    return null;
+}
+
 export default {
     data: new SlashCommandBuilder()
         .setName("resume")
         .setDescription(
             "Génère un résumé intelligent de la discussion avec filtres et styles variés",
+        )
+        .addChannelOption((option) =>
+            option
+                .setName("salon")
+                .setDescription(
+                    "Salon à résumer (laisser vide pour le salon actuel)",
+                )
+                .addChannelTypes(
+                    ChannelType.GuildText,
+                    ChannelType.GuildAnnouncement,
+                    ChannelType.PublicThread,
+                    ChannelType.PrivateThread,
+                ),
         )
         .addIntegerOption((option) =>
             option
@@ -112,13 +140,67 @@ export default {
         ),
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        if (!interaction.channel || !interaction.channel.isTextBased()) {
+        const selectedChannel = interaction.options.getChannel("salon");
+        const targetChannel = (selectedChannel ||
+            interaction.channel) as TextBasedChannel | null;
+
+        if (!targetChannel || !targetChannel.isTextBased()) {
             await interaction.reply({
-                content:
-                    "Cette commande ne peut être exécutée que dans un salon textuel.",
+                content: "Le salon à analyser doit être un salon textuel.",
                 ephemeral: true,
             });
             return;
+        }
+
+        const isAdmin = interaction.user.id === config.adminId;
+        const categoryId = getChannelCategoryId(targetChannel);
+
+        if (
+            !isAdmin &&
+            (!categoryId || !ALLOWED_CATEGORY_IDS.includes(categoryId))
+        ) {
+            await interaction.reply({
+                content:
+                    "Le résumé n'est autorisé que dans les salons des catégories autorisées.",
+                ephemeral: true,
+            });
+            return;
+        }
+
+        const member = interaction.member as GuildMember | null;
+        if ("guild" in targetChannel && targetChannel.guild) {
+            if (member && "permissionsFor" in targetChannel) {
+                const userPermissions = targetChannel.permissionsFor(member);
+                if (
+                    !userPermissions ||
+                    !userPermissions.has(PermissionFlagsBits.ViewChannel) ||
+                    !userPermissions.has(PermissionFlagsBits.ReadMessageHistory)
+                ) {
+                    await interaction.reply({
+                        content:
+                            "Vous ne disposez pas des permissions requises pour lire ce salon.",
+                        ephemeral: true,
+                    });
+                    return;
+                }
+            }
+
+            const botMember = targetChannel.guild.members.me;
+            if (botMember && "permissionsFor" in targetChannel) {
+                const botPermissions = targetChannel.permissionsFor(botMember);
+                if (
+                    !botPermissions ||
+                    !botPermissions.has(PermissionFlagsBits.ViewChannel) ||
+                    !botPermissions.has(PermissionFlagsBits.ReadMessageHistory)
+                ) {
+                    await interaction.reply({
+                        content:
+                            "Le bot ne dispose pas des permissions requises pour lire ce salon.",
+                        ephemeral: true,
+                    });
+                    return;
+                }
+            }
         }
 
         if (!config.geminiApiKey) {
@@ -130,7 +212,6 @@ export default {
             return;
         }
 
-        const member = interaction.member as GuildMember | null;
         const roleIds =
             member &&
             "roles" in member &&
@@ -189,7 +270,7 @@ export default {
 
         let fetchResult;
         try {
-            fetchResult = await fetchChannelMessages(interaction.channel, {
+            fetchResult = await fetchChannelMessages(targetChannel, {
                 limitCount: messagesCount,
                 sinceHours: depuisHeures,
                 sinceDate: parsedDate,
@@ -259,9 +340,8 @@ export default {
         const updatedQuota = checkAiQuota(interaction.user.id, roleIds);
 
         const channelName =
-            "name" in interaction.channel &&
-            typeof interaction.channel.name === "string"
-                ? interaction.channel.name
+            "name" in targetChannel && typeof targetChannel.name === "string"
+                ? targetChannel.name
                 : "discussion";
 
         const styleLabel = RESUME_STYLE_NAMES[chosenStyle] || "Synthèse";
