@@ -7,7 +7,8 @@ export type ResumeStyle =
     | "roast"
     | "debat"
     | "chronologique"
-    | "officiel";
+    | "officiel"
+    | "vulgarisation";
 
 export const RESUME_STYLE_NAMES: Record<ResumeStyle, string> = {
     synthese: "Synthèse",
@@ -17,6 +18,7 @@ export const RESUME_STYLE_NAMES: Record<ResumeStyle, string> = {
     debat: "Analyse de Débat",
     chronologique: "Chronologie",
     officiel: "Procès-Verbal Officiel",
+    vulgarisation: "Vulgarisation Accessible",
 };
 
 const SYSTEM_BASE = `Tu es un analyste expert chargé de restituer et synthétiser des conversations issues de salons Discord.
@@ -84,6 +86,14 @@ Mission : Rédige un procès-verbal formel et solennel selon la structure suivan
 - **Résolutions adoptées** : Décisions retenues ou points classés sans suite.
 Contrainte : Style corporate très soutenu. Aucun émoji dans ce mode.
 Ton : Solennel, administratif et protocolaire.`,
+
+    vulgarisation: `Rôle : Médiateur et vulgarisateur pédagogue (style "explique-moi simplement" / accessible aux non-initiés).
+Mission : Traduire et vulgariser une discussion technique, pointue ou complexe en un langage limpide, imagé et compréhensible par tous.
+Structure :
+- **Le sujet en clair** : Explique l'enjeu principal ou l'idée générale de la discussion en 1 ou 2 phrases très simples, sans aucun terme barbare.
+- **Déchiffrage des échanges** : Résume les interventions clés et les propositions de chaque participant (**Pseudo**) en traduisant le jargon technique par des analogies concrètes de la vie quotidienne. Si un terme technique est indispensable, donne une définition ultra-simple et intuitive.
+- **Ce qu'il faut en retenir** : La conclusion ou le takeaway concret pour ceux qui ne sont pas du métier ou qui ont pris la discussion en cours de route.
+Ton : Pédagogue, décontracté, bienveillant et imagé.`,
 };
 
 export async function summarizeTranscript(
@@ -110,7 +120,8 @@ export async function summarizeTranscript(
 
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${config.geminiModel}:generateContent?key=${config.geminiApiKey}`;
 
-    const isCreativeStyle = style === "drama" || style === "roast";
+    const isCreativeStyle =
+        style === "drama" || style === "roast" || style === "vulgarisation";
     const temperature = isCreativeStyle ? 0.7 : 0.25;
 
     const requestBody = {

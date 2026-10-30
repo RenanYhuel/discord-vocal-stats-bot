@@ -127,6 +127,10 @@ export default {
                         name: "Procès-verbal (style officiel et corporate)",
                         value: "officiel",
                     },
+                    {
+                        name: "Vulgarisation (accessible et sans jargon)",
+                        value: "vulgarisation",
+                    },
                 ),
         )
         .addStringOption((option) =>
