@@ -108,20 +108,20 @@ export default {
         ),
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        await interaction.deferReply();
-
         if (!interaction.channel || !interaction.channel.isTextBased()) {
-            await interaction.editReply({
+            await interaction.reply({
                 content:
                     "Cette commande ne peut être exécutée que dans un salon textuel.",
+                ephemeral: true,
             });
             return;
         }
 
         if (!config.geminiApiKey) {
-            await interaction.editReply({
+            await interaction.reply({
                 content:
                     "La fonctionnalité de résumé IA est indisponible (clé GEMINI_API_KEY non configurée).",
+                ephemeral: true,
             });
             return;
         }
@@ -145,7 +145,10 @@ export default {
                 )
                 .setFooter({ text: "Système de quotas IA" });
 
-            await interaction.editReply({ embeds: [quotaEmbed] });
+            await interaction.reply({
+                embeds: [quotaEmbed],
+                ephemeral: true,
+            });
             return;
         }
 
@@ -168,14 +171,17 @@ export default {
         if (depuisDateRaw) {
             const parsed = parseFlexibleDate(depuisDateRaw);
             if (!parsed) {
-                await interaction.editReply({
+                await interaction.reply({
                     content:
                         "Format temporel non reconnu pour `depuis_date`. Exemples acceptés : `14:30`, `hier 20:00`, `30/10/2026`, `2h`, `30m`.",
+                    ephemeral: true,
                 });
                 return;
             }
             parsedDate = parsed;
         }
+
+        await interaction.deferReply();
 
         let fetchResult;
         try {
@@ -193,18 +199,30 @@ export default {
                 "Erreur lors de la récupération des messages Discord :",
                 error,
             );
-            await interaction.editReply({
-                content:
-                    "Une erreur est survenue lors de la récupération des messages du salon.",
-            });
+            try {
+                await interaction.deleteReply();
+                await interaction.followUp({
+                    content:
+                        "Une erreur est survenue lors de la récupération des messages du salon.",
+                    ephemeral: true,
+                });
+            } catch {
+                // à ignorer
+            }
             return;
         }
 
         if (fetchResult.messageCount === 0) {
-            await interaction.editReply({
-                content:
-                    "Aucun message ne correspond aux critères de sélection indiqués.",
-            });
+            try {
+                await interaction.deleteReply();
+                await interaction.followUp({
+                    content:
+                        "Aucun message ne correspond aux critères de sélection indiqués.",
+                    ephemeral: true,
+                });
+            } catch {
+                // à ignorer
+            }
             return;
         }
 
@@ -220,10 +238,16 @@ export default {
                 "Erreur lors de la génération du résumé par Gemini :",
                 error,
             );
-            await interaction.editReply({
-                content:
-                    "Une erreur est survenue lors de la génération du résumé avec l'IA.",
-            });
+            try {
+                await interaction.deleteReply();
+                await interaction.followUp({
+                    content:
+                        "Une erreur est survenue lors de la génération du résumé avec l'IA.",
+                    ephemeral: true,
+                });
+            } catch {
+                // à ignorer
+            }
             return;
         }
 
