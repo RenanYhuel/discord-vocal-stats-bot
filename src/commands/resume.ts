@@ -73,28 +73,28 @@ export default {
                 )
                 .addChoices(
                     {
-                        name: "📋 Synthèse (équilibrée et structurée)",
+                        name: "Synthèse (équilibrée et structurée)",
                         value: "synthese",
                     },
-                    { name: "⚡ TL;DR (court en 3-4 puces)", value: "tldr" },
+                    { name: "TL;DR (court en 3-4 puces)", value: "tldr" },
                     {
-                        name: "🍿 Drama & Potins (ton téléréalité)",
+                        name: "Drama et potins (ton téléréalité)",
                         value: "drama",
                     },
                     {
-                        name: "🔥 Roast (humoristique et sarcastique)",
+                        name: "Roast (humoristique et sarcastique)",
                         value: "roast",
                     },
                     {
-                        name: "⚖️ Analyse de débat (arguments et positions)",
+                        name: "Analyse de débat (arguments et positions)",
                         value: "debat",
                     },
                     {
-                        name: "⏱️ Chronologique (déroulement temporel)",
+                        name: "Chronologique (déroulement temporel)",
                         value: "chronologique",
                     },
                     {
-                        name: "👔 Procès-verbal (style officiel et corporate)",
+                        name: "Procès-verbal (style officiel et corporate)",
                         value: "officiel",
                     },
                 ),
@@ -281,7 +281,7 @@ export default {
 
         embed.addFields({
             name: "Contexte",
-            value: `⏱️ **Période** : ${periodeStr}\n💬 **Messages analysés** : ${fetchResult.messageCount}\n👥 **Participants** : ${fetchResult.participantCount}`,
+            value: `Période : ${periodeStr}\nMessages analysés : ${fetchResult.messageCount}\nParticipants : ${fetchResult.participantCount}`,
             inline: false,
         });
 
