@@ -39,9 +39,13 @@ export async function fetchChannelMessages(
         }
     }
 
+    const hasTemporalCutoff = Boolean(
+        options.sinceDate || options.sinceHours || options.sinceMessageId,
+    );
+    const defaultLimit = hasTemporalCutoff ? 500 : 100;
     const maxLimit = options.limitCount
         ? Math.min(Math.max(options.limitCount, 5), 500)
-        : 500;
+        : defaultLimit;
 
     let lastId: string | undefined = undefined;
     const rawMessages: Message[] = [];
