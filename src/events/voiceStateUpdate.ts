@@ -5,6 +5,7 @@ import {
     recordDeafSession,
     checkRankOvertake,
 } from "../managers/voiceManager";
+import { handleVoiceGatheringUpdate } from "../managers/peakRecordManager";
 import { VoiceState, Client } from "discord.js";
 import { voiceEvents, voiceCurrent } from "../database/schema";
 import { eq } from "drizzle-orm";
@@ -67,7 +68,7 @@ export default {
                         },
                     })
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
         } else if (
@@ -121,7 +122,7 @@ export default {
                 db.delete(voiceCurrent)
                     .where(eq(voiceCurrent.userId, userId))
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
         } else if (
@@ -211,7 +212,7 @@ export default {
                         },
                     })
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
         }
@@ -280,6 +281,14 @@ export default {
                     );
                 }
             }
+        }
+
+        if (oldState.channelId !== newState.channelId) {
+            handleVoiceGatheringUpdate(
+                client,
+                oldState.channel,
+                newState.channel,
+            );
         }
     },
 };

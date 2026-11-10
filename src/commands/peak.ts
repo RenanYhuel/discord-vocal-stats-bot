@@ -54,6 +54,7 @@ export default {
             year,
             channelName,
             limit,
+            includeActive: true,
         });
 
         const embed = new EmbedBuilder().setColor("#F1C40F").setTimestamp();

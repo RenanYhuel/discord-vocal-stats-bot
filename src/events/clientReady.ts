@@ -2,6 +2,7 @@ import logger from "../utils/logger";
 import config from "../config";
 import db from "../database/db";
 import { recordCompletedSession } from "../managers/voiceManager";
+import { initLiveGatherings } from "../managers/peakRecordManager";
 import { startCronTasks } from "../cron/scheduler";
 import { Client, TextChannel, Message, Events } from "discord.js";
 import { messages, state, voiceEvents, voiceCurrent } from "../database/schema";
@@ -28,6 +29,7 @@ export default {
         try {
             await catchUp(client);
             await syncActiveVoiceStates(client);
+            initLiveGatherings(client);
             startCronTasks(client);
         } catch (err) {
             logger.error(
@@ -172,7 +174,7 @@ async function catchUp(client: Client): Promise<void> {
                                             .run();
                                     }
                                 }
-                            } catch (err) {
+                            } catch {
                                 // à ignorer
                             }
                         }
@@ -257,7 +259,7 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
                     dbUser.joined_at,
                     timestamp,
                 );
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
             db.delete(voiceCurrent)
@@ -284,7 +286,7 @@ async function syncActiveVoiceStates(client: Client): Promise<void> {
                         raw: JSON.stringify({ source: "sync" }),
                     })
                     .run();
-            } catch (err) {
+            } catch {
                 // à ignorer
             }
 

@@ -1,5 +1,5 @@
 import db from "../database/db";
-import { voiceSessions } from "../database/schema";
+import { voiceSessions, voiceCurrent } from "../database/schema";
 import { sql, and, eq } from "drizzle-orm";
 
 export interface PeakGathering {
@@ -17,6 +17,8 @@ export interface GetPeakGatheringsOptions {
     year?: number;
     channelName?: string;
     limit?: number;
+    beforeTime?: number;
+    includeActive?: boolean;
 }
 
 interface DBVoiceSessionRow {
@@ -50,7 +52,7 @@ export function getPeakGatherings(
         conditions.push(eq(voiceSessions.channelName, options.channelName));
     }
 
-    const sessions = db
+    let sessions = db
         .select({
             userId: voiceSessions.userId,
             userName: voiceSessions.userName,
@@ -63,6 +65,46 @@ export function getPeakGatherings(
         .where(and(...conditions))
         .orderBy(sql`${voiceSessions.joinTime} ASC`)
         .all() as DBVoiceSessionRow[];
+
+    if (options.includeActive) {
+        const activeConditions = [];
+        if (options.channelName) {
+            activeConditions.push(
+                eq(voiceCurrent.channelName, options.channelName),
+            );
+        }
+        const activeRows = db
+            .select()
+            .from(voiceCurrent)
+            .where(
+                activeConditions.length > 0
+                    ? and(...activeConditions)
+                    : undefined,
+            )
+            .all();
+
+        const now = new Date();
+        const nowIso = now.toISOString();
+
+        for (const cur of activeRows) {
+            const joinedMs = new Date(cur.joinedAt).getTime();
+            const dur = Math.max(1, Math.floor((now.getTime() - joinedMs) / 1000));
+            sessions.push({
+                userId: cur.userId,
+                userName: cur.username,
+                channelName: cur.channelName,
+                joinTime: cur.joinedAt,
+                leaveTime: nowIso,
+                durationSec: dur,
+            });
+        }
+    }
+
+    if (options.beforeTime) {
+        sessions = sessions.filter(
+            (s) => new Date(s.joinTime).getTime() < options.beforeTime!,
+        );
+    }
 
     if (sessions.length === 0) {
         return [];
