@@ -81,11 +81,8 @@ export default {
             `Voici le Top ${gatherings.length} des moments où le serveur a réuni le plus de personnes en vocal simultanément :`,
         );
 
-        const medals = ["🥇", "🥈", "🥉"];
-
         for (let idx = 0; idx < gatherings.length; idx++) {
             const g = gatherings[idx];
-            const medal = idx < 3 ? medals[idx] : "🏅";
             const peakTimestampSec = Math.floor(g.peakTime / 1000);
 
             const MAX_SHOWN_USERS = 20;
@@ -100,11 +97,11 @@ export default {
                 usersText += ` et ${remainingCount} autre${remainingCount > 1 ? "s" : ""}`;
             }
 
-            const fieldName = `${medal} #${idx + 1} • ${g.peakCount} personnes en même temps (${g.channelName})`;
+            const fieldName = `#${idx + 1} • ${g.peakCount} personnes en même temps (${g.channelName})`;
             const fieldValue =
-                `📅 **Pic atteint le :** <t:${peakTimestampSec}:f> (<t:${peakTimestampSec}:R>)\n` +
-                `⏱️ **Durée du rassemblement :** \`${formatDurationStandard(g.durationSec)}\`\n` +
-                `👥 **Membres présents au pic (${g.peakCount}) :**\n${usersText}`;
+                `- **Pic atteint le :** <t:${peakTimestampSec}:f> (<t:${peakTimestampSec}:R>)\n` +
+                `- **Durée du rassemblement :** \`${formatDurationStandard(g.durationSec)}\`\n` +
+                `- **Membres présents au pic (${g.peakCount}) :**\n${usersText}`;
 
             embed.addFields({
                 name: fieldName,
