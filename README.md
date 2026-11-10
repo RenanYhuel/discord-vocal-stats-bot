@@ -41,6 +41,7 @@ AI_DAILY_QUOTA=5
 - **/records** : Affiche le Hall of Fame des records absolus du serveur (session la plus longue, session sourdine la plus longue, plus grand nombre de sessions, record de temps actif).
 - **/badges** : Affiche la liste des trophees et roles virtuels du serveur avec leurs detenteurs.
 - **/insolite `<classement>`** : Affiche des classements thematiques (insomniaques de nuit, connexions eclairs, temps passe seul, marathons).
+- **/peak `[limite]` `[annee]` `[salon]`** : Affiche le classement des rassemblements vocaux ayant reuni le plus de personnes en simultane (date et heure precises, duree et liste des membres presents).
 
 ### Succes (Achievements)
 
