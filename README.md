@@ -20,6 +20,8 @@ GEMINI_API_KEY=cle_api_google_ai_studio
 GEMINI_MODEL=gemini-2.5-flash
 AI_VIP_ROLE_ID=id_role_illimite
 AI_DAILY_QUOTA=5
+SALON_GENERAL=1361248683001250032
+SALON_ANNONCE=1361248543947489321
 ```
 
 - **LOG_CHANNEL_ID** : Salon recevant les logs de connexions et deconnexions vocales de Carl-bot.
@@ -28,6 +30,8 @@ AI_DAILY_QUOTA=5
 - **GEMINI_MODEL** : Modele Gemini utilise (`gemini-2.5-flash` par defaut).
 - **AI_VIP_ROLE_ID** : Identifiant de role Discord accordant un acces illimite aux resumes IA.
 - **AI_DAILY_QUOTA** : Nombre de resumes IA autorises par jour pour les membres standards (valeur par defaut : 5).
+- **SALON_GENERAL** : Salon textuel general pour les annonces communautaires et les alertes de bilans annuels.
+- **SALON_ANNONCE** : Salon d'annonces officielles recevant la version complete de la Grande Gazette annuelle avec mention.
 
 ---
 

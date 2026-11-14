@@ -12,7 +12,7 @@ import {
     getYearlyServerOverview,
     DBTimeLeaderboardRow,
 } from "../utils/timeQueries";
-import { get2026LockedEmbed } from "../utils/lock2026";
+import { getYearLockedEmbed } from "../utils/lock2026";
 
 export function generateAnnualLeaderboardEmbed(
     leaderboard: DBTimeLeaderboardRow[],
@@ -106,12 +106,10 @@ export default {
         const subcommand = interaction.options.getSubcommand();
         const year = interaction.options.getInteger("annee", true);
 
-        if (year === 2026) {
-            const lockedEmbed = get2026LockedEmbed();
-            if (lockedEmbed) {
-                await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
-                return;
-            }
+        const lockedEmbed = getYearLockedEmbed(year);
+        if (lockedEmbed) {
+            await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
+            return;
         }
 
         if (subcommand === "leaderboard") {

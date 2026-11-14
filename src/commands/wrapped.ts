@@ -12,7 +12,7 @@ import {
     getUserBestMonthForYear,
     getUserTopPartnersForYear,
 } from "../utils/timeQueries";
-import { get2026LockedEmbed } from "../utils/lock2026";
+import { getYearLockedEmbed } from "../utils/lock2026";
 
 const MONTH_NAMES = [
     "Janvier",
@@ -150,14 +150,13 @@ export default {
                 .setDescription("Le membre dont tu souhaites consulter le Wrapped (optionnel)")
         ),
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const requestedYear = interaction.options.getInteger("annee") || 2026;
+        const currentYear = new Date().getFullYear();
+        const requestedYear = interaction.options.getInteger("annee") || currentYear;
 
-        if (requestedYear === 2026) {
-            const lockedEmbed = get2026LockedEmbed();
-            if (lockedEmbed) {
-                await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
-                return;
-            }
+        const lockedEmbed = getYearLockedEmbed(requestedYear);
+        if (lockedEmbed) {
+            await interaction.reply({ embeds: [lockedEmbed], ephemeral: true });
+            return;
         }
 
         await interaction.deferReply();

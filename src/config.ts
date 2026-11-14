@@ -31,6 +31,8 @@ export interface BotConfig {
     geminiModel: string;
     aiVipRoleId: string | null;
     aiDailyQuota: number;
+    generalChannelId: string | null;
+    announcementChannelId: string | null;
 }
 
 const config: BotConfig = {
@@ -46,6 +48,8 @@ const config: BotConfig = {
     geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
     aiVipRoleId: process.env.AI_VIP_ROLE_ID || null,
     aiDailyQuota: parseInt(process.env.AI_DAILY_QUOTA || "5", 10),
+    generalChannelId: process.env.SALON_GENERAL || null,
+    announcementChannelId: process.env.SALON_ANNONCE || null,
 };
 
 export default config;
